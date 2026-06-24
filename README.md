@@ -29,3 +29,4 @@ Here are some ideas to get you started:
 
 <img height="180em" src="https://github-readme-stats-eight-theta.vercel.app/api?username=shaaravraghu&show_icons=true&theme=radical&include_all_commits=true&count_private=true"/>
 <img height="180em" src="https://github-readme-stats-eight-theta.vercel.app/api/top-langs/?username=shaaravraghu&layout=compact&langs_count=8&theme=radical"/>
+<img width="95%" src="https://github-readme-activity-graph.vercel.app/graph?username=shaaravraghu&custom_title=Shaarav's%20Contribution%20Graph&bg_color=0d1117&color=00D4FF&line=ff6b9d&point=7c3aed&area=true&hide_border=false&border_color=533483&radius=8"/>
