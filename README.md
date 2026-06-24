@@ -45,3 +45,5 @@ Here are some ideas to get you started:
 
 
 <img src="https://github-profile-trophy.vercel.app/?username=shaaravraghu&theme=juicyfresh&no-bg=true" />
+
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=shaaravraghu.shaaravraghu)
