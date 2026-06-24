@@ -22,3 +22,4 @@ Here are some ideas to get you started:
 ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=shaaravraghu&size_weight=0.5&count_weight=0.5)
 ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=shaaravraghu&langs_count=15)
 [![Harlok's WakaTime stats](https://github-readme-stats.vercel.app/api/wakatime?username=shaaravraghu)](https://github.com/anuraghazra/github-readme-stats)
+<a width= "45%"><p>&nbsp;<img align="center" src="https://github-readme-stats.vercel.app/api?username=shaaravraghu&theme=gotham&show_icons=true&locale=en" alt="shaaravraghu" width= "45%" /></p></a>
