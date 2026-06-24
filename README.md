@@ -41,3 +41,7 @@ Here are some ideas to get you started:
     <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/JunaidZaman03/JunaidZaman03/output/pacman-contribution-graph-dark.svg" width="95%" />
   </picture>
 </p>
+
+
+
+<img src="https://github-profile-trophy.vercel.app/?username=shaaravraghu&theme=juicyfresh&no-bg=true" />
