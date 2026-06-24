@@ -25,3 +25,7 @@ Here are some ideas to get you started:
 <a width= "45%"><p>&nbsp;<img align="center" src="https://github-readme-stats.vercel.app/api?username=shaaravraghu&theme=gotham&show_icons=true&locale=en" alt="shaaravraghu" width= "45%" /></p></a>
 <a><p><img align="center" src="https://github-readme-streak-stats.herokuapp.com/?user=shaaravraghu&theme=gotham&" alt="shaaravraghu" width= "45%" /></p></a>
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=vivekgupta96&label=Profile%20views&color=0e75b6&style=flat" alt="vivekgupta96" /> </p>
+
+
+<img height="180em" src="https://github-readme-stats-eight-theta.vercel.app/api?username=shaaravraghu&show_icons=true&theme=radical&include_all_commits=true&count_private=true"/>
+<img height="180em" src="https://github-readme-stats-eight-theta.vercel.app/api/top-langs/?username=shaaravraghu&layout=compact&langs_count=8&theme=radical"/>
