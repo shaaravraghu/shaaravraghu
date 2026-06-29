@@ -51,3 +51,5 @@ Here are some ideas to get you started:
 <img align="right" src="https://visitor-badge.laobi.icu/badge?page_id=zumrudu-anka.zumrudu-anka">
 
 ![Visitor Count](https://profile-counter.glitch.me/shaaravraghu/count.svg)
+
+![](https://komarev.com/ghpvc/?username=your-github-username)
