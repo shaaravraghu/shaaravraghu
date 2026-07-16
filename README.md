@@ -93,3 +93,8 @@ FOLLOWER COUNT
 
 
 <a href="https://trendshift.io/developers/2235" target="_blank"><img src="https://trendshift.io/api/badge/developers/2235" alt="anmol098 | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
+
+![Code Time](http://img.shields.io/badge/Code%20Time-5%2C367%20hrs%2050%20mins-blue?style=flat)
+![Profile Views](http://img.shields.io/badge/Profile%20Views-490-blue?style=flat)
+![Lines of code](https://img.shields.io/badge/From%20Hello%20World%20I%27ve%20Written-10.63%20million%20lines%20of%20code-blue?style=flat)
