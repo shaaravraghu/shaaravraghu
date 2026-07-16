@@ -64,7 +64,7 @@ https://www.terminalgif.com
 > [!IMPORTANT]  
 > <a href="https://drive.google.com/drive/folders/1hJGhQTtzDUzMqRtoIQUx7QTLtCN726ZK?usp=sharing" download>Download my resume</a>
 
-
+<a href="https://trendshift.io/developers/2235" target="_blank"><img src="https://trendshift.io/api/badge/developers/2235" alt="anmol098 | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 ![Code Time](http://img.shields.io/badge/Code%20Time-5%2C367%20hrs%2050%20mins-blue?style=flat)
 ![Profile Views](http://img.shields.io/badge/Profile%20Views-490-blue?style=flat)
