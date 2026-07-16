@@ -56,3 +56,5 @@ Here are some ideas to get you started:
 
 ![Hits](https://pythonanywhere.com)
 
+TO MAKE TERMINAL STYLE GIF
+https://www.terminalgif.com
