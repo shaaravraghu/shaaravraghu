@@ -75,3 +75,10 @@ https://www.terminalgif.com
 
 
 <img src="https://github-ranked.vercel.app/api/rank/shaaravraghu" />
+
+
+## 🔥 GitHub Trending
+
+<!-- TRENDING_START -->
+Loading...
+<!-- TRENDING_END -->
