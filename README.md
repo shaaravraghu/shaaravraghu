@@ -58,3 +58,9 @@ Here are some ideas to get you started:
 
 TO MAKE TERMINAL STYLE GIF
 https://www.terminalgif.com
+
+
+### Employer?
+> [!IMPORTANT]  
+> <a href="https://drive.google.com/drive/folders/1hJGhQTtzDUzMqRtoIQUx7QTLtCN726ZK?usp=sharing" download>Download my resume</a>
+
