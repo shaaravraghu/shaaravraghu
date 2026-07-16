@@ -90,3 +90,6 @@ FOLLOWER COUNT
 4. ❗ Opened issue [#1](https://github.com/ternera/github-email-finder/issues/1) in [ternera/github-email-finder](https://github.com/ternera/github-email-finder)
 5. ❌ Closed PR [#198](https://github.com/Aorimn/dislocker/pull/198) in [Aorimn/dislocker](https://github.com/Aorimn/dislocker)
 <!--END_SECTION:activity-->
+
+
+<a href="https://trendshift.io/developers/2235" target="_blank"><img src="https://trendshift.io/api/badge/developers/2235" alt="anmol098 | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
