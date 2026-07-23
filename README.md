@@ -16,7 +16,6 @@ Here are some ideas to get you started:
 -->
 
 
-![Anurag's GitHub stats](https://github-stats-extended.vercel.app/api?username=shaaravraghu)
 
 
 
