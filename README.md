@@ -17,8 +17,7 @@ Here are some ideas to get you started:
 
 
 
-![GitHub Stats](https://github-readme-stats.vercel.app/api/top-langs/?username=shaaravraghu&theme=default&show_icons=true&hide_border=true&layout=compact)
-
+<img align="center" src="https://github-readme-stats.vercel.app/api/top-langs/?username=shaaravraghu"/>
 
 
 
