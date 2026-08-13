@@ -117,10 +117,11 @@ jobs:
 
             const SCALE = 3;
 
-            // Half of your previous 200px width.
-            const RANK_WIDTH = 100;
+            // Original circle diameter ≈ 80px.
+            // Half size ≈ 40px.
+            const RANK_DIAMETER = 40;
 
-            // Position of rank graphic.
+            // Position on Insights image
             const RANK_LEFT = 16;
             const RANK_TOP = 16;
 
@@ -129,12 +130,39 @@ jobs:
             // RENDER CORRECTED RANK SVG
             // ==================================================
 
-            const rankImage = await sharp("rank.svg", {
+            const rank = await sharp("rank.svg", {
               density: 300
             })
+              .png()
+              .toBuffer();
+
+
+            // ==================================================
+            // CROP ONLY THE RANK CIRCLE
+            //
+            // Original SVG:
+            //
+            // circle center ≈ (145, 48)
+            // radius = 40
+            //
+            // Therefore:
+            //
+            // x ≈ 105 → 185
+            // y ≈ 8   → 88
+            //
+            // We add a little padding.
+            // ==================================================
+
+            const rankCrop = await sharp(rank)
+              .extract({
+                left: 100,
+                top: 3,
+                width: 90,
+                height: 90
+              })
               .resize({
-                width: RANK_WIDTH * SCALE,
-                withoutEnlargement: false
+                width: RANK_DIAMETER * SCALE,
+                height: RANK_DIAMETER * SCALE
               })
               .png({
                 compressionLevel: 9
@@ -143,10 +171,10 @@ jobs:
 
 
             // ==================================================
-            // RENDER INSIGHTS SVG
+            // RENDER INSIGHTS
             // ==================================================
 
-            const insightsImage = await sharp("insights.svg", {
+            const insights = await sharp("insights.svg", {
               density: 300
             })
               .png({
@@ -156,13 +184,13 @@ jobs:
 
 
             // ==================================================
-            // OVERLAY RANK ON INSIGHTS
+            // OVERLAY RANK
             // ==================================================
 
-            await sharp(insightsImage)
+            await sharp(insights)
               .composite([
                 {
-                  input: rankImage,
+                  input: rankCrop,
                   left: RANK_LEFT * SCALE,
                   top: RANK_TOP * SCALE
                 }
@@ -174,7 +202,7 @@ jobs:
 
 
             // ==================================================
-            // OUTPUT INFORMATION
+            // OUTPUT
             // ==================================================
 
             const metadata =
