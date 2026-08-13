@@ -184,7 +184,7 @@ jobs:
             <!-- Centered text -->
             <text
               x="${CENTER}"
-              y="${CENTER - 15}"
+              y="${CENTER - 10}"
               text-anchor="middle"
               dominant-baseline="middle"
               font-family="Segoe UI, Ubuntu, Sans-Serif"
@@ -198,7 +198,7 @@ jobs:
             <!-- Centered percentage -->
             <text
               x="${CENTER}"
-              y="${CENTER + 5}"
+              y="${CENTER + 10}"
               text-anchor="middle"
               dominant-baseline="middle"
               font-family="Segoe UI, Ubuntu, Sans-Serif"
