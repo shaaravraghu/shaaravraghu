@@ -117,8 +117,9 @@ jobs:
 
             // Trim unnecessary transparent/empty space
             // around the Rank graphic.
-            const rankCropped = await rank
-              .trim()
+            const rankImage = await sharp("rank.svg", {
+              density: 300
+            })
               .resize({
                 width: RANK_WIDTH * SCALE,
                 withoutEnlargement: false
@@ -143,14 +144,11 @@ jobs:
             // ==================================================
             // PUT RANK ON TOP OF INSIGHTS
             // ==================================================
-
+            
             await sharp(base)
               .composite([
                 {
-                  input: rankCropped,
-
-                  // Position is multiplied by SCALE
-                  // because our image is rendered at 3x.
+                  input: rankImage,
                   left: RANK_LEFT * SCALE,
                   top: RANK_TOP * SCALE
                 }
