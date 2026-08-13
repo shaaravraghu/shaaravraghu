@@ -64,7 +64,6 @@ jobs:
 
           svg = path.read_text()
 
-          # Remove the problematic CSS transform.
           svg = svg.replace(
               "transform-origin: -10px 8px;\n",
               ""
@@ -75,8 +74,6 @@ jobs:
               ""
           )
 
-          # Rotate the blue circle explicitly around its
-          # actual center (-10, 8).
           svg = svg.replace(
               '<circle class="rank-circle" cx="-10" cy="8" r="40" />',
               '<circle class="rank-circle" cx="-10" cy="8" r="40" transform="rotate(-90 -10 8)" />'
@@ -117,48 +114,53 @@ jobs:
 
             const SCALE = 3;
 
-            // Original circle diameter ≈ 80px.
-            // Half size ≈ 40px.
-            const RANK_DIAMETER = 40;
+            // Desired final diameter of the rank circle.
+            // 60 = 60px final size.
+            const RANK_DIAMETER = 60;
 
-            // Position on Insights image
+            // Position on the Insights image.
             const RANK_LEFT = 16;
             const RANK_TOP = 16;
 
 
             // ==================================================
-            // RENDER CORRECTED RANK SVG
+            // RENDER RANK SVG AT 3x
             // ==================================================
 
             const rank = await sharp("rank.svg", {
-              density: 300
+              density: 216
             })
               .png()
               .toBuffer();
 
 
             // ==================================================
-            // CROP ONLY THE RANK CIRCLE
+            // CROP THE ACTUAL RANK CIRCLE
             //
-            // Original SVG:
+            // Original SVG coordinates:
             //
-            // circle center ≈ (145, 48)
-            // radius = 40
+            // Circle center = (145, 48)
+            // Radius        = 40
             //
             // Therefore:
             //
-            // x ≈ 105 → 185
-            // y ≈ 8   → 88
+            // Left = 105
+            // Top  = 8
+            // Width = 80
+            // Height = 80
             //
-            // We add a little padding.
+            // We use 90x90 for a little padding.
+            //
+            // Because the SVG is rendered at 3x,
+            // multiply ALL coordinates by 3.
             // ==================================================
 
             const rankCrop = await sharp(rank)
               .extract({
-                left: 100,
-                top: 3,
-                width: 90,
-                height: 90
+                left: 100 * SCALE,
+                top: 3 * SCALE,
+                width: 90 * SCALE,
+                height: 90 * SCALE
               })
               .resize({
                 width: RANK_DIAMETER * SCALE,
@@ -171,11 +173,11 @@ jobs:
 
 
             // ==================================================
-            // RENDER INSIGHTS
+            // RENDER INSIGHTS AT 3x
             // ==================================================
 
             const insights = await sharp("insights.svg", {
-              density: 300
+              density: 216
             })
               .png({
                 compressionLevel: 9
@@ -191,6 +193,7 @@ jobs:
               .composite([
                 {
                   input: rankCrop,
+
                   left: RANK_LEFT * SCALE,
                   top: RANK_TOP * SCALE
                 }
@@ -202,7 +205,7 @@ jobs:
 
 
             // ==================================================
-            // OUTPUT
+            // OUTPUT INFO
             // ==================================================
 
             const metadata =
@@ -220,7 +223,6 @@ jobs:
           });
 
           EOF
-
 
       # ==================================================
       # COMMIT
