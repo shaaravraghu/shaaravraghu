@@ -41,7 +41,7 @@ jobs:
 
 
       # ==================================================
-      # DOWNLOAD RANK API
+      # DOWNLOAD RANK SVG
       # ==================================================
 
       - name: Download GitHub Rank
@@ -50,14 +50,46 @@ jobs:
             "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true&hide_border=true&bg_color=00000000" \
             -o rank.svg
 
-      - name: Inspect Rank API
-        run: |
-          echo "===== RANK SVG ====="
-          cat rank.svg
-          echo "===== END SVG ====="
 
       # ==================================================
-      # DOWNLOAD INSIGHTS API
+      # FIX RANK SVG GEOMETRY
+      # ==================================================
+
+      - name: Fix Rank Circle Alignment
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path("rank.svg")
+
+          svg = path.read_text()
+
+          # Remove the problematic CSS transform.
+          svg = svg.replace(
+              "transform-origin: -10px 8px;\n",
+              ""
+          )
+
+          svg = svg.replace(
+              "transform: rotate(-90deg);",
+              ""
+          )
+
+          # Rotate the blue circle explicitly around its
+          # actual center (-10, 8).
+          svg = svg.replace(
+              '<circle class="rank-circle" cx="-10" cy="8" r="40" />',
+              '<circle class="rank-circle" cx="-10" cy="8" r="40" transform="rotate(-90 -10 8)" />'
+          )
+
+          path.write_text(svg)
+
+          print("Rank SVG corrected successfully.")
+          PY
+
+
+      # ==================================================
+      # DOWNLOAD INSIGHTS
       # ==================================================
 
       - name: Download GitHub Insights
@@ -68,10 +100,10 @@ jobs:
 
 
       # ==================================================
-      # CREATE COMPOSITE
+      # CREATE HIGH-RES COMPOSITE
       # ==================================================
 
-      - name: Create composite image
+      - name: Create Composite Image
         run: |
           node <<'EOF'
 
@@ -79,82 +111,58 @@ jobs:
 
           async function main() {
 
-            // ------------------------------------------------
+            // ==================================================
             // SETTINGS
-            // ------------------------------------------------
+            // ==================================================
 
             const SCALE = 3;
 
-            // Half of the previous 200px size
+            // Half of your previous 200px width.
             const RANK_WIDTH = 100;
 
-            // Position of rank on Insights
+            // Position of rank graphic.
             const RANK_LEFT = 16;
             const RANK_TOP = 16;
 
 
-            // ------------------------------------------------
-            // RENDER RANK API
-            // ------------------------------------------------
+            // ==================================================
+            // RENDER CORRECTED RANK SVG
+            // ==================================================
 
-            const rank = await sharp("rank.svg", {
+            const rankImage = await sharp("rank.svg", {
               density: 300
             })
-            .png()
-            .toBuffer();
-
-
-            // ------------------------------------------------
-            // REMOVE WHITE BACKGROUND
-            // ------------------------------------------------
-
-            const rankTransparent = await sharp(rank)
-              .removeAlpha()
-              .linear(1, 0)
-              .png()
-              .toBuffer();
-
-
-            // ------------------------------------------------
-            // CROP ONLY THE TOP-LEFT RANK AREA
-            //
-            // IMPORTANT:
-            // Adjust these numbers if necessary.
-            // ------------------------------------------------
-
-            const rankCrop = await sharp(rank)
-              .extract({
-                left: 0,
-                top: 0,
-                width: Math.min(250, (await sharp(rank).metadata()).width),
-                height: Math.min(250, (await sharp(rank).metadata()).height)
-              })
               .resize({
-                width: RANK_WIDTH * SCALE
+                width: RANK_WIDTH * SCALE,
+                withoutEnlargement: false
               })
-              .png()
+              .png({
+                compressionLevel: 9
+              })
               .toBuffer();
 
 
-            // ------------------------------------------------
-            // RENDER INSIGHTS
-            // ------------------------------------------------
+            // ==================================================
+            // RENDER INSIGHTS SVG
+            // ==================================================
 
-            const insights = await sharp("insights.svg", {
+            const insightsImage = await sharp("insights.svg", {
               density: 300
             })
-              .png()
+              .png({
+                compressionLevel: 9
+              })
               .toBuffer();
 
 
-            // ------------------------------------------------
+            // ==================================================
             // OVERLAY RANK ON INSIGHTS
-            // ------------------------------------------------
+            // ==================================================
 
-            await sharp(insights)
+            await sharp(insightsImage)
               .composite([
                 {
-                  input: rankCrop,
+                  input: rankImage,
                   left: RANK_LEFT * SCALE,
                   top: RANK_TOP * SCALE
                 }
@@ -165,18 +173,15 @@ jobs:
               .toFile("github-cards.png");
 
 
-            // ------------------------------------------------
-            // DONE
-            // ------------------------------------------------
+            // ==================================================
+            // OUTPUT INFORMATION
+            // ==================================================
 
-            const finalImage =
+            const metadata =
               await sharp("github-cards.png").metadata();
 
             console.log(
-              "Generated:",
-              finalImage.width,
-              "x",
-              finalImage.height
+              `Created github-cards.png: ${metadata.width}x${metadata.height}`
             );
 
           }
@@ -204,13 +209,8 @@ jobs:
           git add github-cards.png
 
           if git diff --cached --quiet; then
-
             echo "No changes to commit."
-
           else
-
-            git commit -m "Update GitHub profile cards"
-
+            git commit -m "Fix GitHub rank alignment"
             git push
-
           fi
