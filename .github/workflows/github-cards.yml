@@ -58,8 +58,14 @@ jobs:
       - name: Download GitHub Insights
         run: |
           curl -L \
-            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
+            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=false" \
             -o insights.svg
+          # profile=false: insights.svg was drawing its own avatar
+          # circle in the top-left corner. That circle sat at a
+          # different offset than our composited rank ring, which
+          # is why two separate, misaligned circles showed up
+          # instead of a single clean ring like the standalone
+          # rank card.
 
 
       # --------------------------------------------------
