@@ -58,14 +58,8 @@ jobs:
       - name: Download GitHub Insights
         run: |
           curl -L \
-            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=false" \
+            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
             -o insights.svg
-          # profile=false: insights.svg was drawing its own avatar
-          # circle in the top-left corner. That circle sat at a
-          # different offset than our composited rank ring, which
-          # is why two separate, misaligned circles showed up
-          # instead of a single clean ring like the standalone
-          # rank card.
 
 
       # --------------------------------------------------
@@ -89,14 +83,9 @@ jobs:
             const SCALE = 3;
 
 
-            // Width AND height cap for the Rank graphic.
-            // Halved from 200 -> 100 per request.
-            // Using a height cap too (not just width) stops the
-            // badge from growing taller than intended when the
-            // trimmed source isn't a perfect square (ring + label
-            // text stacked = taller-than-wide bounding box).
-            const RANK_WIDTH = 100;
-            const RANK_HEIGHT = 100;
+            // Width of the Rank graphic.
+            // Increase/decrease this to change its size.
+            const RANK_WIDTH = 200;
 
 
             // Position of Rank graphic on the Insights image.
@@ -104,7 +93,7 @@ jobs:
             // Increase LEFT  -> moves it right
             // Increase TOP   -> moves it down
             //
-            const RANK_LEFT = 100;
+            const RANK_LEFT = 20;
             const RANK_TOP = 20;
 
 
@@ -126,36 +115,18 @@ jobs:
             });
 
 
-            // Trim unnecessary transparent/empty space around the
-            // Rank graphic. An explicit threshold makes the crop
-            // consistent on all sides instead of relying on sharp's
-            // default corner-pixel guess, which can crop the ring
-            // asymmetrically if there's any soft edge/shadow.
+            // Trim unnecessary transparent/empty space
+            // around the Rank graphic.
             const rankCropped = await rank
-              .trim({ threshold: 10 })
+              .trim()
               .resize({
                 width: RANK_WIDTH * SCALE,
-                height: RANK_HEIGHT * SCALE,
-                fit: "inside",            // never exceeds this box,
-                                           // even if the source isn't square
                 withoutEnlargement: false
               })
               .png({
                 compressionLevel: 9
               })
               .toBuffer();
-
-
-            // Log the actual resulting badge size. If it still
-            // overlaps anything, use these numbers (divided by
-            // SCALE) to nudge RANK_LEFT/RANK_TOP.
-            const rankMeta = await sharp(rankCropped).metadata();
-            console.log(
-              "Rank badge size:",
-              rankMeta.width,
-              "x",
-              rankMeta.height
-            );
 
 
             // ==================================================
