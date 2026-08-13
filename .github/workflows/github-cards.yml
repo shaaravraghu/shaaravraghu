@@ -104,7 +104,7 @@ jobs:
             // Increase LEFT  -> moves it right
             // Increase TOP   -> moves it down
             //
-            const RANK_LEFT = 10;
+            const RANK_LEFT = 100;
             const RANK_TOP = 20;
 
 
