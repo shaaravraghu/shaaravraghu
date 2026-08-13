@@ -1,4 +1,4 @@
-## Hi there 👋
+ ## Hi there 👋
 
 <!--
 **shaaravraghu/shaaravraghu** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
@@ -193,7 +193,19 @@ Loading...
 
 
 
+<a href="https://github.com/anuraghazra/github-readme-stats">
+  <img
+    src="https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&&hide=stars,commits,prs,issues,contribs&hide_title=true"
+    width="200"
+  />
+</a>
 
+
+<p align="center">
+  <img src="https://github-stats-extended.vercel.app/api?username=shaaravraghu&show_icons=true&theme=holi&rank_icon=percentile" width="450">
+  <br>
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=shaaravraghu&layout=compact&theme=omni" width="450">
+</p>
 
 
 
