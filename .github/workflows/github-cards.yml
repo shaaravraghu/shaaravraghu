@@ -122,7 +122,7 @@ jobs:
 
 
           // Size of the SVG canvas.
-          const SIZE = 500;
+          const SIZE = 75;
 
 
           // Center of the ring.
