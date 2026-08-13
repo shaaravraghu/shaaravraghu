@@ -177,8 +177,7 @@ jobs:
               stroke-width="${STROKE_WIDTH}"
               stroke-linecap="round"
               fill="none"
-              pathLength="100"
-              stroke-dasharray="${PERCENTAGE} 100"
+              stroke-dasharray="${(2 * Math.PI * RADIUS) * (PERCENTAGE / 100)} ${2 * Math.PI * RADIUS}"
               transform="rotate(-90 ${CENTER} ${CENTER})"
             />
 
