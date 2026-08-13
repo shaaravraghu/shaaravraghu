@@ -13,16 +13,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # --------------------------------------------------
+      # 1. Checkout repository
+      # --------------------------------------------------
+
       - name: Checkout repository
         uses: actions/checkout@v4
+
+
+      # --------------------------------------------------
+      # 2. Setup Node.js
+      # --------------------------------------------------
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+
+      # --------------------------------------------------
+      # 3. Install Sharp
+      # --------------------------------------------------
+
       - name: Install Sharp
         run: npm install sharp
+
+
+      # --------------------------------------------------
+      # 4. Download GitHub Rank
+      # --------------------------------------------------
 
       - name: Download GitHub Rank
         run: |
@@ -30,107 +50,88 @@ jobs:
             "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true&hide_border=true&bg_color=00000000" \
             -o rank.svg
 
+
+      # --------------------------------------------------
+      # 5. Download GitHub Insights
+      # --------------------------------------------------
+
       - name: Download GitHub Insights
         run: |
           curl -L \
             "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
             -o insights.svg
 
+
+      # --------------------------------------------------
+      # 6. Create composite image
+      # --------------------------------------------------
+
       - name: Create high-resolution composite
         run: |
           node <<'EOF'
+
           const sharp = require("sharp");
 
           async function main() {
 
-            /*
-             * ============================================
-             * CONFIGURATION
-             * ============================================
-             */
+            // ==================================================
+            // CONFIGURATION
+            // ==================================================
 
+            // Render everything at 3x resolution.
+            // This makes the final image much sharper.
             const SCALE = 3;
 
-            // Final displayed size of the rank card
+
+            // Width of the Rank graphic.
+            // Increase/decrease this to change its size.
             const RANK_WIDTH = 200;
 
-            // Position of the rank card
+
+            // Position of Rank graphic on the Insights image.
+            //
+            // Increase LEFT  -> moves it right
+            // Increase TOP   -> moves it down
+            //
             const RANK_LEFT = 20;
             const RANK_TOP = 20;
 
 
-            /*
-             * ============================================
-             * LOAD INSIGHTS AT HIGH RESOLUTION
-             * ============================================
-             */
+            // ==================================================
+            // LOAD INSIGHTS
+            // ==================================================
 
             const insights = sharp("insights.svg", {
               density: 300
             });
 
-            const insightsMetadata = await insights.metadata();
 
-            console.log(
-              "Insights:",
-              insightsMetadata.width,
-              "x",
-              insightsMetadata.height
-            );
-
-
-            /*
-             * ============================================
-             * LOAD RANK CARD AT HIGH RESOLUTION
-             * ============================================
-             */
+            // ==================================================
+            // LOAD + PROCESS RANK
+            // ==================================================
 
             const rank = sharp("rank.svg", {
               density: 300
             });
 
-            const rankMetadata = await rank.metadata();
 
-            console.log(
-              "Rank:",
-              rankMetadata.width,
-              "x",
-              rankMetadata.height
-            );
-
-
-            /*
-             * ============================================
-             * CROP THE RANK CARD
-             *
-             * Instead of positioning the entire card,
-             * remove unnecessary whitespace so that the
-             * actual "Top 8.6%" circle is positioned correctly.
-             * ============================================
-             */
-
+            // Trim unnecessary transparent/empty space
+            // around the Rank graphic.
             const rankCropped = await rank
-              .trim({
-                background: {
-                  r: 255,
-                  g: 255,
-                  b: 255,
-                  alpha: 1
-                }
-              })
+              .trim()
               .resize({
                 width: RANK_WIDTH * SCALE,
                 withoutEnlargement: false
               })
-              .png()
+              .png({
+                compressionLevel: 9
+              })
               .toBuffer();
 
 
-            /*
-             * ============================================
-             * CREATE HIGH-RES INSIGHTS IMAGE
-             * ============================================
-             */
+            // ==================================================
+            // CONVERT INSIGHTS TO HIGH-RES PNG
+            // ==================================================
 
             const base = await insights
               .png({
@@ -139,19 +140,17 @@ jobs:
               .toBuffer();
 
 
-            /*
-             * ============================================
-             * COMPOSITE
-             *
-             * Coordinates are multiplied by SCALE because
-             * the output image is 3x resolution.
-             * ============================================
-             */
+            // ==================================================
+            // PUT RANK ON TOP OF INSIGHTS
+            // ==================================================
 
             await sharp(base)
               .composite([
                 {
                   input: rankCropped,
+
+                  // Position is multiplied by SCALE
+                  // because our image is rendered at 3x.
                   left: RANK_LEFT * SCALE,
                   top: RANK_TOP * SCALE
                 }
@@ -162,39 +161,56 @@ jobs:
               .toFile("github-cards.png");
 
 
-            /*
-             * ============================================
-             * PRINT FINAL SIZE
-             * ============================================
-             */
+            // ==================================================
+            // PRINT FINAL IMAGE INFORMATION
+            // ==================================================
 
             const finalMetadata =
               await sharp("github-cards.png").metadata();
 
             console.log(
-              "Final:",
+              "Final image:",
               finalMetadata.width,
               "x",
               finalMetadata.height
             );
           }
 
+
+          // ====================================================
+          // RUN
+          // ====================================================
+
           main().catch(error => {
             console.error(error);
             process.exit(1);
           });
+
           EOF
+
+
+      # --------------------------------------------------
+      # 7. Commit generated image
+      # --------------------------------------------------
 
       - name: Commit updated card
         run: |
+
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add github-cards.png
 
           if git diff --cached --quiet; then
+
             echo "No changes to commit."
+
           else
+
             git commit -m "Update GitHub profile cards"
+
             git push
+
           fi
