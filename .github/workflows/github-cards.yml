@@ -223,6 +223,15 @@ jobs:
           EOF
 
 
+      - name: Download GitHub Insights
+        run: |
+          curl -L \
+            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
+            -o insights.svg
+
+          echo "Downloaded insights.svg"
+          ls -lh insights.svg
+
       # ============================================================
       # 6. COMPOSITE EVERYTHING
       # ============================================================
