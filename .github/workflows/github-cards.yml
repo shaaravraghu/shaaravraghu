@@ -14,17 +14,17 @@ jobs:
 
     steps:
 
-      # --------------------------------------------------
-      # 1. Checkout repository
-      # --------------------------------------------------
+      # ==================================================
+      # CHECKOUT
+      # ==================================================
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
 
-      # --------------------------------------------------
-      # 2. Setup Node.js
-      # --------------------------------------------------
+      # ==================================================
+      # NODE
+      # ==================================================
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,17 +32,17 @@ jobs:
           node-version: 20
 
 
-      # --------------------------------------------------
-      # 3. Install Sharp
-      # --------------------------------------------------
+      # ==================================================
+      # SHARP
+      # ==================================================
 
       - name: Install Sharp
         run: npm install sharp
 
 
-      # --------------------------------------------------
-      # 4. Download GitHub Rank
-      # --------------------------------------------------
+      # ==================================================
+      # DOWNLOAD RANK API
+      # ==================================================
 
       - name: Download GitHub Rank
         run: |
@@ -50,10 +50,15 @@ jobs:
             "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true&hide_border=true&bg_color=00000000" \
             -o rank.svg
 
+      - name: Inspect Rank API
+        run: |
+          echo "===== RANK SVG ====="
+          cat rank.svg
+          echo "===== END SVG ====="
 
-      # --------------------------------------------------
-      # 5. Download GitHub Insights
-      # --------------------------------------------------
+      # ==================================================
+      # DOWNLOAD INSIGHTS API
+      # ==================================================
 
       - name: Download GitHub Insights
         run: |
@@ -62,11 +67,11 @@ jobs:
             -o insights.svg
 
 
-      # --------------------------------------------------
-      # 6. Create composite image
-      # --------------------------------------------------
+      # ==================================================
+      # CREATE COMPOSITE
+      # ==================================================
 
-      - name: Create high-resolution composite
+      - name: Create composite image
         run: |
           node <<'EOF'
 
@@ -74,81 +79,82 @@ jobs:
 
           async function main() {
 
-            // ==================================================
-            // CONFIGURATION
-            // ==================================================
+            // ------------------------------------------------
+            // SETTINGS
+            // ------------------------------------------------
 
-            // Render everything at 3x resolution.
-            // This makes the final image much sharper.
             const SCALE = 3;
 
+            // Half of the previous 200px size
+            const RANK_WIDTH = 100;
 
-            // Width of the Rank graphic.
-            // Increase/decrease this to change its size.
-            const RANK_WIDTH = 200;
-
-
-            // Position of Rank graphic on the Insights image.
-            //
-            // Increase LEFT  -> moves it right
-            // Increase TOP   -> moves it down
-            //
-            const RANK_LEFT = 20;
-            const RANK_TOP = 20;
+            // Position of rank on Insights
+            const RANK_LEFT = 16;
+            const RANK_TOP = 16;
 
 
-            // ==================================================
-            // LOAD INSIGHTS
-            // ==================================================
+            // ------------------------------------------------
+            // RENDER RANK API
+            // ------------------------------------------------
 
-            const insights = sharp("insights.svg", {
-              density: 300
-            });
-
-
-            // ==================================================
-            // LOAD + PROCESS RANK
-            // ==================================================
-
-            const rank = sharp("rank.svg", {
-              density: 300
-            });
-
-
-            // Trim unnecessary transparent/empty space
-            // around the Rank graphic.
-            const rankImage = await sharp("rank.svg", {
+            const rank = await sharp("rank.svg", {
               density: 300
             })
+            .png()
+            .toBuffer();
+
+
+            // ------------------------------------------------
+            // REMOVE WHITE BACKGROUND
+            // ------------------------------------------------
+
+            const rankTransparent = await sharp(rank)
+              .removeAlpha()
+              .linear(1, 0)
+              .png()
+              .toBuffer();
+
+
+            // ------------------------------------------------
+            // CROP ONLY THE TOP-LEFT RANK AREA
+            //
+            // IMPORTANT:
+            // Adjust these numbers if necessary.
+            // ------------------------------------------------
+
+            const rankCrop = await sharp(rank)
+              .extract({
+                left: 0,
+                top: 0,
+                width: Math.min(250, (await sharp(rank).metadata()).width),
+                height: Math.min(250, (await sharp(rank).metadata()).height)
+              })
               .resize({
-                width: RANK_WIDTH * SCALE,
-                withoutEnlargement: false
+                width: RANK_WIDTH * SCALE
               })
-              .png({
-                compressionLevel: 9
-              })
+              .png()
               .toBuffer();
 
 
-            // ==================================================
-            // CONVERT INSIGHTS TO HIGH-RES PNG
-            // ==================================================
+            // ------------------------------------------------
+            // RENDER INSIGHTS
+            // ------------------------------------------------
 
-            const base = await insights
-              .png({
-                compressionLevel: 9
-              })
+            const insights = await sharp("insights.svg", {
+              density: 300
+            })
+              .png()
               .toBuffer();
 
 
-            // ==================================================
-            // PUT RANK ON TOP OF INSIGHTS
-            // ==================================================
-            
-            await sharp(base)
+            // ------------------------------------------------
+            // OVERLAY RANK ON INSIGHTS
+            // ------------------------------------------------
+
+            await sharp(insights)
               .composite([
                 {
-                  input: rankImage,
+                  input: rankCrop,
                   left: RANK_LEFT * SCALE,
                   top: RANK_TOP * SCALE
                 }
@@ -159,25 +165,21 @@ jobs:
               .toFile("github-cards.png");
 
 
-            // ==================================================
-            // PRINT FINAL IMAGE INFORMATION
-            // ==================================================
+            // ------------------------------------------------
+            // DONE
+            // ------------------------------------------------
 
-            const finalMetadata =
+            const finalImage =
               await sharp("github-cards.png").metadata();
 
             console.log(
-              "Final image:",
-              finalMetadata.width,
+              "Generated:",
+              finalImage.width,
               "x",
-              finalMetadata.height
+              finalImage.height
             );
+
           }
-
-
-          // ====================================================
-          // RUN
-          // ====================================================
 
           main().catch(error => {
             console.error(error);
@@ -187,9 +189,9 @@ jobs:
           EOF
 
 
-      # --------------------------------------------------
-      # 7. Commit generated image
-      # --------------------------------------------------
+      # ==================================================
+      # COMMIT
+      # ==================================================
 
       - name: Commit updated card
         run: |
