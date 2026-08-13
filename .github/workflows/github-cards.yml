@@ -36,41 +36,151 @@ jobs:
             "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
             -o insights.svg
 
-      - name: Create composite image
+      - name: Create high-resolution composite
         run: |
           node <<'EOF'
           const sharp = require("sharp");
 
           async function main() {
-            const insights = sharp("insights.svg");
-            const metadata = await insights.metadata();
 
-            const rank = await sharp("rank.svg")
+            /*
+             * ============================================
+             * CONFIGURATION
+             * ============================================
+             */
+
+            const SCALE = 3;
+
+            // Final displayed size of the rank card
+            const RANK_WIDTH = 200;
+
+            // Position of the rank card
+            const RANK_LEFT = 20;
+            const RANK_TOP = 20;
+
+
+            /*
+             * ============================================
+             * LOAD INSIGHTS AT HIGH RESOLUTION
+             * ============================================
+             */
+
+            const insights = sharp("insights.svg", {
+              density: 300
+            });
+
+            const insightsMetadata = await insights.metadata();
+
+            console.log(
+              "Insights:",
+              insightsMetadata.width,
+              "x",
+              insightsMetadata.height
+            );
+
+
+            /*
+             * ============================================
+             * LOAD RANK CARD AT HIGH RESOLUTION
+             * ============================================
+             */
+
+            const rank = sharp("rank.svg", {
+              density: 300
+            });
+
+            const rankMetadata = await rank.metadata();
+
+            console.log(
+              "Rank:",
+              rankMetadata.width,
+              "x",
+              rankMetadata.height
+            );
+
+
+            /*
+             * ============================================
+             * CROP THE RANK CARD
+             *
+             * Instead of positioning the entire card,
+             * remove unnecessary whitespace so that the
+             * actual "Top 8.6%" circle is positioned correctly.
+             * ============================================
+             */
+
+            const rankCropped = await rank
+              .trim({
+                background: {
+                  r: 255,
+                  g: 255,
+                  b: 255,
+                  alpha: 1
+                }
+              })
               .resize({
-                width: 200,
-                withoutEnlargement: true
+                width: RANK_WIDTH * SCALE,
+                withoutEnlargement: false
               })
               .png()
               .toBuffer();
 
-            await insights
+
+            /*
+             * ============================================
+             * CREATE HIGH-RES INSIGHTS IMAGE
+             * ============================================
+             */
+
+            const base = await insights
+              .png({
+                compressionLevel: 9
+              })
+              .toBuffer();
+
+
+            /*
+             * ============================================
+             * COMPOSITE
+             *
+             * Coordinates are multiplied by SCALE because
+             * the output image is 3x resolution.
+             * ============================================
+             */
+
+            await sharp(base)
               .composite([
                 {
-                  input: rank,
-                  left: 20,
-                  top: 20
+                  input: rankCropped,
+                  left: RANK_LEFT * SCALE,
+                  top: RANK_TOP * SCALE
                 }
               ])
-              .png()
+              .png({
+                compressionLevel: 9
+              })
               .toFile("github-cards.png");
 
+
+            /*
+             * ============================================
+             * PRINT FINAL SIZE
+             * ============================================
+             */
+
+            const finalMetadata =
+              await sharp("github-cards.png").metadata();
+
             console.log(
-              `Created github-cards.png (${metadata.width}x${metadata.height})`
+              "Final:",
+              finalMetadata.width,
+              "x",
+              finalMetadata.height
             );
           }
 
-          main().catch(err => {
-            console.error(err);
+          main().catch(error => {
+            console.error(error);
             process.exit(1);
           });
           EOF
