@@ -43,11 +43,14 @@ jobs:
       # 4. DOWNLOAD GITHUB INSIGHTS
       # ============================================================
 
-      - name: Download GitHub Insights
+      - name: Download GitHub Rank
         run: |
           curl -L \
-            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
-            -o insights.svg
+            "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true&hide_border=true&bg_color=00000000" \
+            -o rank.svg
+
+          echo "Downloaded rank.svg"
+          ls -lh rank.svg
 
       - name: Extract Rank Percentage
         run: |
@@ -55,19 +58,21 @@ jobs:
 
           const fs = require("fs");
 
-          const svg = fs.readFileSync("rank.svg", "utf8");
+          // Make sure the file exists
+          if (!fs.existsSync("rank.svg")) {
+            throw new Error("rank.svg was not found.");
+          }
 
-          // Find:
-          // <text ... data-testid="percentile-rank-value" ...>
-          //   8.6%
-          // </text>
+          const svg = fs.readFileSync("rank.svg", "utf8");
 
           const match = svg.match(
             /data-testid="percentile-rank-value"[\s\S]*?>\s*([\d.]+)%\s*<\/text>/
           );
 
           if (!match) {
-            throw new Error("Could not find percentile in rank.svg");
+            throw new Error(
+              "Could not find percentile in rank.svg"
+            );
           }
 
           const percentage = parseFloat(match[1]);
@@ -82,7 +87,9 @@ jobs:
             );
           }
 
-          console.log(`GitHub Rank Percentage: ${percentage}%`);
+          console.log(
+            `GitHub Rank Percentage: ${percentage}%`
+          );
 
           fs.writeFileSync(
             "rank-percentage.txt",
@@ -90,7 +97,6 @@ jobs:
           );
 
           EOF
-
 
       # ============================================================
       # 5. CREATE CUSTOM RANK SVG
