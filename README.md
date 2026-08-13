@@ -197,7 +197,9 @@ Loading...
 
 
 
-
+## GitHub Status
+[![Crystal's GitHub stats](https://github-stats-extended.vercel.app/api?username=shaaravraghu&show_icons=true&theme=holi&rank_icon=percentile)](https://github.com/anuraghazra/github-readme-stats)
+<!--![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=x200706\&layout=compact&theme=omni)-->
 
 
 
