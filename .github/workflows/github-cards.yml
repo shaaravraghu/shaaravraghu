@@ -177,14 +177,14 @@ jobs:
               stroke-width="${STROKE_WIDTH}"
               stroke-linecap="round"
               fill="none"
-              stroke-dasharray="${(2 * Math.PI * RADIUS) * (PERCENTAGE / 100)} ${2 * Math.PI * RADIUS}"
+              stroke-dasharray="${(2 * Math.PI * RADIUS) * ((100 - PERCENTAGE) / 100)} ${2 * Math.PI * RADIUS}"
               transform="rotate(-90 ${CENTER} ${CENTER})"
             />
 
             <!-- Centered text -->
             <text
               x="${CENTER}"
-              y="${CENTER - 10}"
+              y="${CENTER - 20}"
               text-anchor="middle"
               dominant-baseline="middle"
               font-family="Segoe UI, Ubuntu, Sans-Serif"
