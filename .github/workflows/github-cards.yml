@@ -178,7 +178,7 @@ jobs:
               stroke-linecap="round"
               fill="none"
               pathLength="100"
-              stroke-dasharray="${PERCENTAGE} ${100 - PERCENTAGE}"
+              stroke-dasharray="${PERCENTAGE} 100"
               transform="rotate(-90 ${CENTER} ${CENTER})"
             />
 
