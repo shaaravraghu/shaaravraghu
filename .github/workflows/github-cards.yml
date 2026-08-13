@@ -27,7 +27,7 @@ jobs:
       - name: Download GitHub Rank
         run: |
           curl -L \
-            "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true" \
+            "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true&hide_border=true&bg_color=00000000" \
             -o rank.svg
 
       - name: Download GitHub Insights
