@@ -83,9 +83,14 @@ jobs:
             const SCALE = 3;
 
 
-            // Width of the Rank graphic.
-            // Increase/decrease this to change its size.
-            const RANK_WIDTH = 200;
+            // Width AND height cap for the Rank graphic.
+            // Halved from 200 -> 100 per request.
+            // Using a height cap too (not just width) stops the
+            // badge from growing taller than intended when the
+            // trimmed source isn't a perfect square (ring + label
+            // text stacked = taller-than-wide bounding box).
+            const RANK_WIDTH = 100;
+            const RANK_HEIGHT = 100;
 
 
             // Position of Rank graphic on the Insights image.
@@ -115,18 +120,36 @@ jobs:
             });
 
 
-            // Trim unnecessary transparent/empty space
-            // around the Rank graphic.
+            // Trim unnecessary transparent/empty space around the
+            // Rank graphic. An explicit threshold makes the crop
+            // consistent on all sides instead of relying on sharp's
+            // default corner-pixel guess, which can crop the ring
+            // asymmetrically if there's any soft edge/shadow.
             const rankCropped = await rank
-              .trim()
+              .trim({ threshold: 10 })
               .resize({
                 width: RANK_WIDTH * SCALE,
+                height: RANK_HEIGHT * SCALE,
+                fit: "inside",            // never exceeds this box,
+                                           // even if the source isn't square
                 withoutEnlargement: false
               })
               .png({
                 compressionLevel: 9
               })
               .toBuffer();
+
+
+            // Log the actual resulting badge size. If it still
+            // overlaps anything, use these numbers (divided by
+            // SCALE) to nudge RANK_LEFT/RANK_TOP.
+            const rankMeta = await sharp(rankCropped).metadata();
+            console.log(
+              "Rank badge size:",
+              rankMeta.width,
+              "x",
+              rankMeta.height
+            );
 
 
             // ==================================================
