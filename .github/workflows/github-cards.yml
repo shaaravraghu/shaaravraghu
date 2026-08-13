@@ -1,0 +1,90 @@
+name: Update GitHub Cards
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Sharp
+        run: npm install sharp
+
+      - name: Download GitHub Rank
+        run: |
+          curl -L \
+            "https://github-stats-extended.vercel.app/api?username=shaaravraghu&rank_icon=percentile&hide=stars,commits,prs,issues,contribs&hide_title=true" \
+            -o rank.svg
+
+      - name: Download GitHub Insights
+        run: |
+          curl -L \
+            "https://git-hub-insights-virid.vercel.app/api/insight?username=shaaravraghu&theme=github_light&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true" \
+            -o insights.svg
+
+      - name: Create composite image
+        run: |
+          node <<'EOF'
+          const sharp = require("sharp");
+
+          async function main() {
+            const insights = sharp("insights.svg");
+            const metadata = await insights.metadata();
+
+            const rank = await sharp("rank.svg")
+              .resize({
+                width: 200,
+                withoutEnlargement: true
+              })
+              .png()
+              .toBuffer();
+
+            await insights
+              .composite([
+                {
+                  input: rank,
+                  left: 20,
+                  top: 20
+                }
+              ])
+              .png()
+              .toFile("github-cards.png");
+
+            console.log(
+              `Created github-cards.png (${metadata.width}x${metadata.height})`
+            );
+          }
+
+          main().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          EOF
+
+      - name: Commit updated card
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add github-cards.png
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update GitHub profile cards"
+            git push
+          fi
