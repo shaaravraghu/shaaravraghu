@@ -309,3 +309,7 @@ Loading...
     </td>
   </tr>
 </table>
+
+<p align="center">
+  <img src= https://github-stats-extended.vercel.app/api/?username=shaaravraghu&show_icons=true&theme=calm&rank_icon=github&include_all_commits=true&custom_title=Anurag%27s+Stats&disable_animations=true&number_format=long&show=prs_merged_percentage,prs_reviewed />
+</p>
