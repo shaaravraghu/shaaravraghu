@@ -3,7 +3,7 @@
 </p> -->
 
 Show up. Every day. No matter how many times you’ve failed—or how horrible yesterday was. Today is still yours.
-Please star and support this project [https://github.com/shaaravraghu/ClipWallet/]
+Please star and support this free open source project [https://github.com/shaaravraghu/ClipWallet/]
 
 
 <p align="center">
