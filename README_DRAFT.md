@@ -329,10 +329,10 @@ Loading...
 
 <div align="center"> 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ChetanSenta/ChetanSenta/main/dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ChetanSenta/ChetanSenta/main/light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/shaaravraghu/shaaravraghu/main/dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/shaaravraghu/shaaravraghu/main/light.svg">
   <img
     alt="Chetan"
-    src="https://raw.githubusercontent.com/ChetanSenta/ChetanSenta/main/dark.svg">
+    src="https://raw.githubusercontent.com/shaaravraghu/shaaravraghu/main/dark.svg">
 </picture>
 </div>
