@@ -45,9 +45,9 @@ jobs:
               chart_mask = '''
               <rect
                 x="0"
-                y="365"
-                width="225"
-                height="215"
+                y="0"
+                width="500"
+                height="575"
                 fill="white"
               />
               '''
@@ -64,7 +64,7 @@ jobs:
               bottom_mask = '''
               <rect
                 x="225"
-                y="575"
+                y="0"
                 width="735"
                 height="65"
                 fill="white"
