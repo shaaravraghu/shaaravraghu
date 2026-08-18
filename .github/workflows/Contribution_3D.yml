@@ -18,7 +18,7 @@ jobs:
         uses: yoshi389111/github-profile-3d-contrib@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USERNAME: Aashutoshkumarbhardwaj
+          USERNAME: shaaravraghu
 
       - name: Commit & Push
         run: |
