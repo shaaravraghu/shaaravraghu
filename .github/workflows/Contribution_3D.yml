@@ -21,63 +21,74 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: shaaravraghu
 
-      # Remove the bottom-left language chart and statistics
-      - name: Remove bottom-left statistics
+      # Remove ONLY the unwanted bottom-left chart and bottom statistics
+      - name: Remove bottom-left chart and statistics
         run: |
           python3 - <<'PY'
-          import re
           from pathlib import Path
+          import re
 
-          files = [
-              Path("profile-3d-contrib/profile-green.svg"),
-              Path("profile-3d-contrib/profile-green-animate.svg"),
-              Path("profile-3d-contrib/profile-season.svg"),
-              Path("profile-3d-contrib/profile-season-animate.svg"),
-              Path("profile-3d-contrib/profile-south-season.svg"),
-              Path("profile-3d-contrib/profile-south-season-animate.svg"),
-              Path("profile-3d-contrib/profile-night-view.svg"),
-              Path("profile-3d-contrib/profile-night-green.svg"),
-              Path("profile-3d-contrib/profile-night-rainbow.svg"),
-              Path("profile-3d-contrib/profile-gitblock.svg"),
-          ]
+          svg_dir = Path("profile-3d-contrib")
 
-          for path in files:
-              if not path.exists():
-                  continue
+          for svg_file in svg_dir.glob("*.svg"):
+              svg = svg_file.read_text()
 
-              svg = path.read_text()
+              # ---------------------------------------------------------
+              # 1. Remove the circular language chart + language legend
+              #    from the bottom-left corner.
+              #
+              #    This covers approximately:
+              #    x = 0 -> 225
+              #    y = 365 -> 575
+              # ---------------------------------------------------------
 
-              # Remove the language donut/chart section.
-              # The chart is positioned in the lower-left area.
-              svg = re.sub(
-                  r'<g[^>]*transform="translate\(.*?\)"[^>]*>.*?</g>',
-                  lambda m: "" if re.search(
-                      r'(Python|C\+\+|TypeScript|JavaScript|Java|Rust|Ruby|Go|C|R|other)',
-                      m.group(0),
-                      re.I
-                  ) else m.group(0),
-                  svg,
-                  flags=re.S
+              chart_mask = '''
+              <rect
+                x="0"
+                y="365"
+                width="225"
+                height="215"
+                fill="white"
+              />
+              '''
+
+              # ---------------------------------------------------------
+              # 2. Remove the contribution / star / fork statistics
+              #    along the bottom.
+              #
+              #    This covers:
+              #    x = 225 -> end
+              #    y = 575 -> end
+              # ---------------------------------------------------------
+
+              bottom_mask = '''
+              <rect
+                x="225"
+                y="575"
+                width="735"
+                height="65"
+                fill="white"
+              />
+              '''
+
+              # Insert masks immediately before </svg>
+              svg = svg.replace(
+                  "</svg>",
+                  chart_mask + bottom_mask + "</svg>"
               )
 
-              # Remove bottom-left contribution/stat text.
-              svg = re.sub(
-                  r'<text[^>]*>.*?(?:contributions|contribution|reviews|review).*?</text>',
-                  "",
-                  svg,
-                  flags=re.S | re.I
-              )
+              svg_file.write_text(svg)
 
-              path.write_text(svg)
-
-              print(f"Processed: {path}")
+              print(f"Updated: {svg_file}")
           PY
 
       - name: Commit & Push
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
+
           git add -A .
+
           if git commit -m "update: 3D contribution graph"; then
             git push
           else
