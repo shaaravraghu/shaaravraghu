@@ -11,6 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,6 +20,58 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: shaaravraghu
+
+      # Remove the bottom-left language chart and statistics
+      - name: Remove bottom-left statistics
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          files = [
+              Path("profile-3d-contrib/profile-green.svg"),
+              Path("profile-3d-contrib/profile-green-animate.svg"),
+              Path("profile-3d-contrib/profile-season.svg"),
+              Path("profile-3d-contrib/profile-season-animate.svg"),
+              Path("profile-3d-contrib/profile-south-season.svg"),
+              Path("profile-3d-contrib/profile-south-season-animate.svg"),
+              Path("profile-3d-contrib/profile-night-view.svg"),
+              Path("profile-3d-contrib/profile-night-green.svg"),
+              Path("profile-3d-contrib/profile-night-rainbow.svg"),
+              Path("profile-3d-contrib/profile-gitblock.svg"),
+          ]
+
+          for path in files:
+              if not path.exists():
+                  continue
+
+              svg = path.read_text()
+
+              # Remove the language donut/chart section.
+              # The chart is positioned in the lower-left area.
+              svg = re.sub(
+                  r'<g[^>]*transform="translate\(.*?\)"[^>]*>.*?</g>',
+                  lambda m: "" if re.search(
+                      r'(Python|C\+\+|TypeScript|JavaScript|Java|Rust|Ruby|Go|C|R|other)',
+                      m.group(0),
+                      re.I
+                  ) else m.group(0),
+                  svg,
+                  flags=re.S
+              )
+
+              # Remove bottom-left contribution/stat text.
+              svg = re.sub(
+                  r'<text[^>]*>.*?(?:contributions|contribution|reviews|review).*?</text>',
+                  "",
+                  svg,
+                  flags=re.S | re.I
+              )
+
+              path.write_text(svg)
+
+              print(f"Processed: {path}")
+          PY
 
       - name: Commit & Push
         run: |
