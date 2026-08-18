@@ -24,6 +24,7 @@ jobs:
       # Remove ONLY the unwanted bottom-left chart and bottom statistics
       - name: Remove bottom-left chart and statistics
         run: |
+          find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
           python3 - <<'PY'
           from pathlib import Path
           import re
