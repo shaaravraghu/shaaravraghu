@@ -22,59 +22,29 @@ jobs:
           USERNAME: shaaravraghu
 
       # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      # Then convert DP.png to a real vector SVG and place it on top.
+      # Then convert DP.png to SVG and place it on top.
       - name: Remove chart, statistics and add DP
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
 
           # ---------------------------------------------------------
-          # Locate DP.png anywhere in the repository
+          # Verify DP.png exists and is a real PNG
           # ---------------------------------------------------------
-          DP_PATH=$(find "$GITHUB_WORKSPACE" -type f \
-            \( -iname "DP.png" -o -iname "dp.png" \) \
-            -print -quit)
+          echo "Checking DP.png..."
 
-          if [ -z "$DP_PATH" ]; then
-            echo "ERROR: DP.png was not found anywhere in the repository."
-            echo ""
-            echo "Repository files:"
-            find "$GITHUB_WORKSPACE" -maxdepth 4 -type f | sort
+          if [ ! -f "DP.png" ]; then
+            echo "ERROR: DP.png not found!"
             exit 1
           fi
 
-          echo "Found DP image:"
-          echo "$DP_PATH"
+          file DP.png
 
-          # ---------------------------------------------------------
-          # Verify that the file is actually an image
-          # ---------------------------------------------------------
-          echo ""
-          echo "File information:"
-          file "$DP_PATH"
+          if ! file DP.png | grep -qi "PNG image data"; then
+            echo "ERROR: DP.png is not a valid PNG!"
+            exit 1
+          fi
 
-          echo ""
-          echo "Image size:"
-          python3 - "$DP_PATH" <<'PY'
-          from PIL import Image
-          import sys
-
-          image_path = sys.argv[1]
-
-          try:
-              image = Image.open(image_path)
-
-              print(f"Format : {image.format}")
-              print(f"Size   : {image.size}")
-              print(f"Mode   : {image.mode}")
-
-              image.verify()
-
-              print("Image verification: OK")
-
-          except Exception as e:
-              print(f"ERROR: Cannot read image: {e}")
-              sys.exit(1)
-          PY
+          echo "DP.png verified successfully."
 
           # ---------------------------------------------------------
           # Install VTracer
@@ -84,34 +54,16 @@ jobs:
           # ---------------------------------------------------------
           # Convert DP.png -> REAL VECTOR SVG
           # ---------------------------------------------------------
-          python3 - "$DP_PATH" <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
-          import sys
           import vtracer
 
-          input_file = Path(sys.argv[1]).resolve()
-          output_file = Path("main/DP.svg").resolve()
+          input_file = Path("DP.png").resolve()
+          output_file = Path("DP.svg").resolve()
 
-          print("========================================")
-          print("VTracer conversion")
-          print("========================================")
           print(f"Input : {input_file}")
           print(f"Output: {output_file}")
-          print(f"Exists: {input_file.exists()}")
-          print(f"Size  : {input_file.stat().st_size} bytes")
-          print("========================================")
 
-          if not input_file.exists():
-              raise FileNotFoundError(
-                  f"Input image does not exist: {input_file}"
-              )
-
-          output_file.parent.mkdir(
-              parents=True,
-              exist_ok=True
-          )
-
-          # VTracer 0.6.15 API
           vtracer.convert_image_to_svg_py(
               str(input_file),
               str(output_file),
@@ -130,32 +82,43 @@ jobs:
 
           if not output_file.exists():
               raise RuntimeError(
-                  "VTracer finished but DP.svg was not created."
+                  "VTracer failed to create DP.svg"
               )
 
-          print(f"Successfully created: {output_file}")
-          print(f"SVG size: {output_file.stat().st_size} bytes")
+          print(
+              f"Created DP.svg "
+              f"({output_file.stat().st_size} bytes)"
+          )
           PY
 
           # ---------------------------------------------------------
-          # Insert the vector DP into the generated contribution SVG
+          # Insert vector DP into profile-gitblock.svg
           # ---------------------------------------------------------
           python3 - <<'PY'
           from pathlib import Path
           import re
 
-          svg_dir = Path("profile-3d-contrib")
-          dp_svg_path = Path("main/DP.svg")
+          svg_file = Path(
+              "profile-3d-contrib/profile-gitblock.svg"
+          )
 
-          if not dp_svg_path.exists():
+          dp_svg_file = Path("DP.svg")
+
+          if not svg_file.exists():
               raise FileNotFoundError(
-                  "main/DP.svg was not created."
+                  f"Could not find {svg_file}"
               )
 
-          dp_svg = dp_svg_path.read_text()
+          if not dp_svg_file.exists():
+              raise FileNotFoundError(
+                  "DP.svg was not created."
+              )
+
+          svg = svg_file.read_text()
+          dp_svg = dp_svg_file.read_text()
 
           # ---------------------------------------------------------
-          # Extract the viewBox from DP.svg
+          # Get DP.svg's viewBox
           # ---------------------------------------------------------
           root_match = re.search(
               r"<svg[^>]*>",
@@ -165,14 +128,14 @@ jobs:
 
           if not root_match:
               raise RuntimeError(
-                  "Could not find <svg> element in DP.svg"
+                  "Could not find SVG root in DP.svg"
               )
 
-          svg_root = root_match.group(0)
+          root_tag = root_match.group(0)
 
           viewbox_match = re.search(
               r'viewBox=["\']([^"\']+)["\']',
-              svg_root
+              root_tag
           )
 
           if not viewbox_match:
@@ -185,20 +148,20 @@ jobs:
           print(f"DP.svg viewBox: {viewbox}")
 
           # ---------------------------------------------------------
-          # Extract contents of DP.svg
+          # Extract the vector contents from DP.svg
           # ---------------------------------------------------------
-          match = re.search(
+          content_match = re.search(
               r"<svg[^>]*>(.*?)</svg>",
               dp_svg,
               flags=re.DOTALL
           )
 
-          if not match:
+          if not content_match:
               raise RuntimeError(
-                  "Could not extract contents from DP.svg"
+                  "Could not extract DP.svg contents."
               )
 
-          dp_content = match.group(1)
+          dp_content = content_match.group(1)
 
           # Remove XML declaration if present
           dp_content = re.sub(
@@ -209,14 +172,16 @@ jobs:
           )
 
           # ---------------------------------------------------------
-          # Position and size of DP
+          # Place DP at bottom-left
           #
-          # x = 25
-          # y = 515
-          # width = 200
-          # height = 200
+          # Position:
+          #   x = 25
+          #   y = 515
+          #
+          # Size:
+          #   200 x 200
           # ---------------------------------------------------------
-          dp_group = f"""
+          dp_vector = f"""
           <svg
             x="25"
             y="515"
@@ -230,53 +195,65 @@ jobs:
           """
 
           # ---------------------------------------------------------
-          # Modify every generated SVG
+          # Mask unwanted bottom-left language chart
           # ---------------------------------------------------------
-          for svg_file in svg_dir.glob("*.svg"):
+          chart_mask = """
+          <rect
+            x="0"
+            y="500"
+            width="500"
+            height="575"
+            fill="white"
+          />
+          """
 
-              svg = svg_file.read_text()
+          # ---------------------------------------------------------
+          # Mask bottom contribution/star/fork statistics
+          # ---------------------------------------------------------
+          bottom_mask = """
+          <rect
+            x="225"
+            y="800"
+            width="735"
+            height="65"
+            fill="white"
+          />
+          """
 
-              # -----------------------------------------------------
-              # 1. Remove bottom-left language chart
-              # -----------------------------------------------------
-              chart_mask = """
-              <rect
-                x="0"
-                y="500"
-                width="500"
-                height="575"
-                fill="white"
-              />
-              """
+          # ---------------------------------------------------------
+          # Put masks and vector DP at the VERY END of the SVG.
+          #
+          # This ensures the DP is above the masks.
+          # ---------------------------------------------------------
+          insertion = (
+              chart_mask +
+              bottom_mask +
+              dp_vector
+          )
 
-              # -----------------------------------------------------
-              # 2. Remove bottom statistics
-              # -----------------------------------------------------
-              bottom_mask = """
-              <rect
-                x="225"
-                y="800"
-                width="735"
-                height="65"
-                fill="white"
-              />
-              """
-
-              # -----------------------------------------------------
-              # 3. Add VECTOR DP on top
-              # -----------------------------------------------------
-              svg = svg.replace(
-                  "</svg>",
-                  chart_mask +
-                  bottom_mask +
-                  dp_group +
-                  "</svg>"
+          if "</svg>" not in svg:
+              raise RuntimeError(
+                  "profile-gitblock.svg has no closing </svg>."
               )
 
-              svg_file.write_text(svg)
+          svg = svg.replace(
+              "</svg>",
+              insertion + "</svg>"
+          )
 
-              print(f"Updated: {svg_file}")
+          svg_file.write_text(svg)
+
+          print("Successfully updated:")
+          print(svg_file)
           PY
+
+          # ---------------------------------------------------------
+          # Remove temporary vector file.
+          # We only want the final generated SVG.
+          # ---------------------------------------------------------
+          rm -f DP.svg
+
+          echo "DP.svg removed. Final SVG is ready."
           
       - name: Commit & Push
         run: |
