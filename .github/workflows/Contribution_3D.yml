@@ -80,26 +80,14 @@ jobs:
               # Spline gives smoother photographic contours
               mode="spline",
 
-              # Remove tiny regions
-              filter_speckle=8,
-
-              # Reduce color complexity
-              color_precision=5,
-
-              # Merge more similar colors
-              layer_difference=24,
-
+              filter_speckle=3,
+              color_precision=6,
+              layer_difference=12,
               corner_threshold=60,
-
-              # Larger threshold = fewer points
-              length_threshold=6.0,
-
-              max_iterations=8,
-
+              length_threshold=4.0,
+              max_iterations=10,
               splice_threshold=45,
-
-              # Fewer decimal places = smaller SVG
-              path_precision=2
+              path_precision=3
           )
 
           if not output_file.exists():
