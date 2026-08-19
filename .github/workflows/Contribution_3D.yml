@@ -157,8 +157,8 @@ jobs:
 
               {
                   "file": "Claude_Crab.jpeg",
-                  "x": 620,
-                  "y": 660,
+                  "x": 600,
+                  "y": 680,
                   "width": 175,
                   "height": 175,
               },
