@@ -241,11 +241,11 @@ jobs:
           # Put the vector DP into a nested SVG viewport.
           #
           # Position:
-          #   x = 25
-          #   y = 515
+          #   x = 0
+          #   y = 650
           #
           # Size:
-          #   200 x 200
+          #   400 x 400
           #
           # preserveAspectRatio keeps the original photo ratio.
           # ---------------------------------------------------------
