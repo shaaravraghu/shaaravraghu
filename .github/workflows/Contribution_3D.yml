@@ -252,7 +252,7 @@ jobs:
           dp_vector = f"""
           <svg
             x="0"
-            y="650"
+            y="500"
             width="400"
             height="400"
             viewBox="{viewbox}"
