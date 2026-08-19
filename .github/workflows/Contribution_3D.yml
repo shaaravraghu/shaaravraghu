@@ -30,36 +30,42 @@ jobs:
           # ---------------------------------------------------------
           # Install VTracer
           # ---------------------------------------------------------
-          python3 -m pip install --upgrade vtracer
+          python3 -m pip install --user vtracer==0.6.15
 
           # ---------------------------------------------------------
           # Convert DP.png -> REAL VECTOR SVG
-          #
-          # IMPORTANT:
-          # This does NOT create <image href="...">.
-          # VTracer creates actual SVG paths.
           # ---------------------------------------------------------
           python3 - <<'PY'
           from pathlib import Path
           import vtracer
 
-          input_file = Path("DP.png")
-          output_file = Path("DP.svg")
+          input_file = Path("main/DP.png")
+          output_file = Path("main/DP.svg")
 
           if not input_file.exists():
               raise FileNotFoundError(
                   f"Could not find {input_file}"
               )
 
-          # Photo preset gives better results for a photograph.
-          vtracer.Config.photo().convert_file(
+          # VTracer 0.6.x Python API
+          vtracer.convert_image_to_svg_py(
               str(input_file),
-              str(output_file)
+              str(output_file),
+              colormode="color",
+              hierarchical="stacked",
+              mode="spline",
+              filter_speckle=4,
+              color_precision=6,
+              layer_difference=16,
+              corner_threshold=60,
+              length_threshold=4.0,
+              max_iterations=10,
+              splice_threshold=45,
+              path_precision=3
           )
 
           print(f"Created vector SVG: {output_file}")
           PY
-
           # ---------------------------------------------------------
           # Insert the vector DP into the generated contribution SVG
           # ---------------------------------------------------------
