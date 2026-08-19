@@ -22,38 +22,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: shaaravraghu
 
-      # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      # Then place the original DP.png directly on top.
-      - name: Remove chart, statistics and add DP
+      # ---------------------------------------------------------
+      # Remove unwanted generated files and add custom images
+      # ---------------------------------------------------------
+      - name: Remove chart, statistics and add custom images
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
 
-          # ---------------------------------------------------------
-          # Verify DP.png
-          # ---------------------------------------------------------
-          echo "Checking DP.png..."
+          echo "Checking custom images..."
 
-          if [ ! -f "DP.png" ]; then
-            echo "ERROR: DP.png not found!"
-            exit 1
-          fi
+          # -------------------------------------------------------
+          # Verify all required images exist
+          # -------------------------------------------------------
+          IMAGES=(
+            "Among_Us.jpg"
+            "CEO.png"
+            "Claude_Crab.jpeg"
+            "DP.png"
+            "Dino.png"
+            "Eat_Sleep_Code_Repeat.jpeg"
+            "Error_404.jpeg"
+            "Think_Out_Side_The_Box.jpeg"
+          )
 
-          file DP.png
+          for IMAGE in "${IMAGES[@]}"; do
+            if [ ! -f "$IMAGE" ]; then
+              echo "ERROR: $IMAGE not found!"
+              exit 1
+            fi
 
-          if ! file DP.png | grep -qi "PNG image data"; then
-            echo "ERROR: DP.png is not a valid PNG!"
-            exit 1
-          fi
+            echo "Found: $IMAGE"
+            file "$IMAGE"
+          done
 
-          echo "DP.png verified successfully."
+          echo ""
+          echo "All images verified successfully."
 
-          # ---------------------------------------------------------
-          # Insert ORIGINAL DP.png into profile-gitblock.svg
-          #
-          # IMPORTANT:
-          # DP.png is NOT converted to SVG/vector.
-          # It is embedded directly as a raster PNG using base64.
-          # ---------------------------------------------------------
+          # -------------------------------------------------------
+          # Embed all images directly into profile-gitblock.svg
+          # -------------------------------------------------------
           python3 - <<'PY'
           from pathlib import Path
           import base64
@@ -63,29 +70,22 @@ jobs:
               "profile-3d-contrib/profile-gitblock.svg"
           )
 
-          png_file = Path("DP.png")
-
           if not svg_file.exists():
               raise FileNotFoundError(
                   f"Could not find {svg_file}"
               )
 
-          if not png_file.exists():
-              raise FileNotFoundError(
-                  "DP.png was not found."
-              )
-
-          # ---------------------------------------------------------
+          # -------------------------------------------------------
           # Read SVG
-          # ---------------------------------------------------------
+          # -------------------------------------------------------
           svg = svg_file.read_text()
 
-          # ---------------------------------------------------------
-          # CHANGE SVG BACKGROUND
-          # ---------------------------------------------------------
+          # -------------------------------------------------------
+          # SVG background
+          # -------------------------------------------------------
           BACKGROUND = "#f7e700"
 
-          # Add background-color directly to root <svg>
+          # Add background style to root SVG
           svg = re.sub(
               r"<svg([^>]*)>",
               lambda m: (
@@ -98,8 +98,7 @@ jobs:
               count=1
           )
 
-          # Also add a background rectangle for renderers
-          # that ignore CSS background on SVG.
+          # Add explicit background rectangle
           background = f"""
           <rect
             x="0"
@@ -121,67 +120,185 @@ jobs:
               f"Applied SVG background: {BACKGROUND}"
           )
 
-          # ---------------------------------------------------------
-          # Read ORIGINAL PNG
-          # ---------------------------------------------------------
-          png_data = png_file.read_bytes()
-
-          # Convert PNG bytes to base64.
-          # This does NOT vectorize or modify the image.
-          png_base64 = base64.b64encode(png_data).decode("ascii")
-
-          # ---------------------------------------------------------
-          # Create raster PNG <image>
+          # -------------------------------------------------------
+          # Image configuration
           #
-          # The PNG is displayed at:
-          #   x = 0
-          #   y = 500
-          #   width = 400
-          #   height = 400
+          # x       = horizontal position
+          # y       = vertical position
+          # width   = displayed width
+          # height  = displayed height
           #
           # preserveAspectRatio keeps the original image ratio.
-          # ---------------------------------------------------------
-          dp_image = f"""
-          <image
-            x="0"
-            y="450"
-            width="400"
-            height="400"
-            preserveAspectRatio="xMidYMid meet"
-            href="data:image/png;base64,{png_base64}"
-          />
-          """
+          # -------------------------------------------------------
+          IMAGES = [
+              {
+                  "file": "DP.png",
+                  "x": 0,
+                  "y": 450,
+                  "width": 400,
+                  "height": 400,
+              },
 
-          # ---------------------------------------------------------
-          # Put DP.png directly on TOP of the existing SVG
-          # ---------------------------------------------------------
+              {
+                  "file": "Among_Us.jpg",
+                  "x": 410,
+                  "y": 450,
+                  "width": 200,
+                  "height": 200,
+              },
+
+              {
+                  "file": "CEO.png",
+                  "x": 620,
+                  "y": 450,
+                  "width": 200,
+                  "height": 200,
+              },
+
+              {
+                  "file": "Claude_Crab.jpeg",
+                  "x": 830,
+                  "y": 450,
+                  "width": 200,
+                  "height": 200,
+              },
+
+              {
+                  "file": "Dino.png",
+                  "x": 1040,
+                  "y": 450,
+                  "width": 200,
+                  "height": 200,
+              },
+
+              {
+                  "file": "Eat_Sleep_Code_Repeat.jpeg",
+                  "x": 410,
+                  "y": 660,
+                  "width": 200,
+                  "height": 180,
+              },
+
+              {
+                  "file": "Error_404.jpeg",
+                  "x": 620,
+                  "y": 660,
+                  "width": 200,
+                  "height": 180,
+              },
+
+              {
+                  "file": "Think_Out_Side_The_Box.jpeg",
+                  "x": 830,
+                  "y": 660,
+                  "width": 200,
+                  "height": 180,
+              },
+          ]
+
+          # -------------------------------------------------------
+          # Generate <image> elements
+          # -------------------------------------------------------
+          embedded_images = []
+
+          for item in IMAGES:
+              image_file = Path(item["file"])
+
+              if not image_file.exists():
+                  raise FileNotFoundError(
+                      f"Image not found: {image_file}"
+                  )
+
+              # ---------------------------------------------------
+              # Determine MIME type
+              # ---------------------------------------------------
+              extension = image_file.suffix.lower()
+
+              MIME_TYPES = {
+                  ".png": "image/png",
+                  ".jpg": "image/jpeg",
+                  ".jpeg": "image/jpeg",
+              }
+
+              if extension not in MIME_TYPES:
+                  raise ValueError(
+                      f"Unsupported image format: {extension}"
+                  )
+
+              mime_type = MIME_TYPES[extension]
+
+              # ---------------------------------------------------
+              # Read ORIGINAL image bytes
+              # ---------------------------------------------------
+              image_data = image_file.read_bytes()
+
+              # ---------------------------------------------------
+              # Convert directly to Base64
+              #
+              # No vectorization.
+              # No resizing.
+              # No image conversion.
+              # ---------------------------------------------------
+              image_base64 = base64.b64encode(
+                  image_data
+              ).decode("ascii")
+
+              # ---------------------------------------------------
+              # Create SVG raster image
+              # ---------------------------------------------------
+              image_element = f"""
+              <image
+                x="{item['x']}"
+                y="{item['y']}"
+                width="{item['width']}"
+                height="{item['height']}"
+                preserveAspectRatio="xMidYMid meet"
+                href="data:{mime_type};base64,{image_base64}"
+              />
+              """
+
+              embedded_images.append(image_element)
+
+              print(
+                  f"Embedded {item['file']} "
+                  f"at ({item['x']}, {item['y']}) "
+                  f"{item['width']}x{item['height']}"
+              )
+
+          # -------------------------------------------------------
+          # Put all images on top of the SVG
+          # -------------------------------------------------------
           if "</svg>" not in svg:
               raise RuntimeError(
                   "profile-gitblock.svg has no closing </svg>."
               )
 
+          image_layer = "\n".join(embedded_images)
+
           svg = svg.replace(
               "</svg>",
-              dp_image + "</svg>",
+              image_layer + "\n</svg>",
               1
           )
 
-          # ---------------------------------------------------------
+          # -------------------------------------------------------
           # Write final SVG
-          # ---------------------------------------------------------
+          # -------------------------------------------------------
           svg_file.write_text(svg)
 
+          print("")
           print(
-              "Successfully inserted ORIGINAL DP.png "
-              "as a raster image into:"
+              "Successfully embedded all custom images into:"
           )
-
           print(svg_file)
           PY
 
           echo ""
           echo "Final SVG generated successfully."
 
+      # ---------------------------------------------------------
+      # Commit and push
+      # ---------------------------------------------------------
       - name: Commit & Push
         run: |
           git config user.name github-actions
