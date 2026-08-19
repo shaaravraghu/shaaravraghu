@@ -31,7 +31,7 @@ jobs:
           import base64
       
           svg_dir = Path("profile-3d-contrib")
-          image_path = Path("main/DP.png")
+          image_path = Path("DP.png")
       
           # Embed DP.png into the SVG
           image_data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
