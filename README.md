@@ -13,3 +13,19 @@ Please star and support this free open source project [https://github.com/shaara
     width="1000"
   >
 </p>
+
+<p align="center">
+  <img
+    src="./profile-3d-contrib/profile-gitblock.svg"
+    alt="GitHub Graph"
+    width="1000"
+  >
+</p>
+
+<p align="center">
+  <img
+    src="./SKILLS.png"
+    alt="GitHub Graph"
+    width="1000"
+  >
+</p>
