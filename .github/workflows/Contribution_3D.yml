@@ -25,22 +25,27 @@ jobs:
       - name: Remove bottom-left chart and statistics
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
-      
+
           python3 - <<'PY'
           from pathlib import Path
-          import base64
-      
+
           svg_dir = Path("profile-3d-contrib")
-          image_path = Path("DP.png")
-      
-          # Embed DP.png into the SVG
-          image_data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
-          image_href = f"data:image/png;base64,{image_data}"
-      
+
+          # ---------------------------------------------------------
+          # IMPORTANT:
+          # Use the RAW GitHub URL instead of embedding the PNG
+          # as Base64. GitHub's SVG renderer can reject data URIs.
+          #
+          # DP.png must exist in the main branch at this location.
+          # ---------------------------------------------------------
+          image_href = "https://raw.githubusercontent.com/shaaravraghu/shaaravraghu/DP.png"
+
           for svg_file in svg_dir.glob("*.svg"):
               svg = svg_file.read_text()
-      
-              # Cover bottom-left language chart
+
+              # -----------------------------------------------------
+              # 1. Remove the unwanted circular language chart
+              # -----------------------------------------------------
               chart_mask = """
               <rect
                 x="0"
@@ -50,8 +55,10 @@ jobs:
                 fill="white"
               />
               """
-      
-              # Cover bottom statistics
+
+              # -----------------------------------------------------
+              # 2. Remove the bottom contribution/star/fork stats
+              # -----------------------------------------------------
               bottom_mask = """
               <rect
                 x="225"
@@ -61,8 +68,10 @@ jobs:
                 fill="white"
               />
               """
-      
-              # Add profile picture
+
+              # -----------------------------------------------------
+              # 3. Add DP.png on top of the masked area
+              # -----------------------------------------------------
               dp_image = f"""
               <image
                 x="25"
@@ -71,16 +80,20 @@ jobs:
                 height="200"
                 preserveAspectRatio="xMidYMid meet"
                 href="{image_href}"
+                xlink:href="{image_href}"
               />
               """
-      
-              # Insert overlays before closing SVG tag
+
+              # -----------------------------------------------------
+              # Put masks + image ON TOP of the existing SVG
+              # -----------------------------------------------------
               svg = svg.replace(
                   "</svg>",
                   chart_mask + bottom_mask + dp_image + "</svg>"
               )
-      
+
               svg_file.write_text(svg)
+
               print(f"Updated: {svg_file}")
           PY
           
