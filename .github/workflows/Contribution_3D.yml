@@ -22,10 +22,59 @@ jobs:
           USERNAME: shaaravraghu
 
       # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      # Then convert DP.png to a real SVG and place it on top.
+      # Then convert DP.png to a real vector SVG and place it on top.
       - name: Remove chart, statistics and add DP
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
+
+          # ---------------------------------------------------------
+          # Locate DP.png anywhere in the repository
+          # ---------------------------------------------------------
+          DP_PATH=$(find "$GITHUB_WORKSPACE" -type f \
+            \( -iname "DP.png" -o -iname "dp.png" \) \
+            -print -quit)
+
+          if [ -z "$DP_PATH" ]; then
+            echo "ERROR: DP.png was not found anywhere in the repository."
+            echo ""
+            echo "Repository files:"
+            find "$GITHUB_WORKSPACE" -maxdepth 4 -type f | sort
+            exit 1
+          fi
+
+          echo "Found DP image:"
+          echo "$DP_PATH"
+
+          # ---------------------------------------------------------
+          # Verify that the file is actually an image
+          # ---------------------------------------------------------
+          echo ""
+          echo "File information:"
+          file "$DP_PATH"
+
+          echo ""
+          echo "Image size:"
+          python3 - "$DP_PATH" <<'PY'
+          from PIL import Image
+          import sys
+
+          image_path = sys.argv[1]
+
+          try:
+              image = Image.open(image_path)
+
+              print(f"Format : {image.format}")
+              print(f"Size   : {image.size}")
+              print(f"Mode   : {image.mode}")
+
+              image.verify()
+
+              print("Image verification: OK")
+
+          except Exception as e:
+              print(f"ERROR: Cannot read image: {e}")
+              sys.exit(1)
+          PY
 
           # ---------------------------------------------------------
           # Install VTracer
@@ -35,19 +84,34 @@ jobs:
           # ---------------------------------------------------------
           # Convert DP.png -> REAL VECTOR SVG
           # ---------------------------------------------------------
-          python3 - <<'PY'
+          python3 - "$DP_PATH" <<'PY'
           from pathlib import Path
+          import sys
           import vtracer
 
-          input_file = Path("DP.png")
-          output_file = Path("DP.svg")
+          input_file = Path(sys.argv[1]).resolve()
+          output_file = Path("main/DP.svg").resolve()
+
+          print("========================================")
+          print("VTracer conversion")
+          print("========================================")
+          print(f"Input : {input_file}")
+          print(f"Output: {output_file}")
+          print(f"Exists: {input_file.exists()}")
+          print(f"Size  : {input_file.stat().st_size} bytes")
+          print("========================================")
 
           if not input_file.exists():
               raise FileNotFoundError(
-                  f"Could not find {input_file}"
+                  f"Input image does not exist: {input_file}"
               )
 
-          # VTracer 0.6.x Python API
+          output_file.parent.mkdir(
+              parents=True,
+              exist_ok=True
+          )
+
+          # VTracer 0.6.15 API
           vtracer.convert_image_to_svg_py(
               str(input_file),
               str(output_file),
@@ -64,8 +128,15 @@ jobs:
               path_precision=3
           )
 
-          print(f"Created vector SVG: {output_file}")
+          if not output_file.exists():
+              raise RuntimeError(
+                  "VTracer finished but DP.svg was not created."
+              )
+
+          print(f"Successfully created: {output_file}")
+          print(f"SVG size: {output_file.stat().st_size} bytes")
           PY
+
           # ---------------------------------------------------------
           # Insert the vector DP into the generated contribution SVG
           # ---------------------------------------------------------
@@ -76,13 +147,45 @@ jobs:
           svg_dir = Path("profile-3d-contrib")
           dp_svg_path = Path("main/DP.svg")
 
+          if not dp_svg_path.exists():
+              raise FileNotFoundError(
+                  "main/DP.svg was not created."
+              )
+
           dp_svg = dp_svg_path.read_text()
 
           # ---------------------------------------------------------
-          # Extract ONLY the contents inside <svg>...</svg>
-          #
-          # This prevents us from nesting a complete <svg> document
-          # inside another SVG unnecessarily.
+          # Extract the viewBox from DP.svg
+          # ---------------------------------------------------------
+          root_match = re.search(
+              r"<svg[^>]*>",
+              dp_svg,
+              flags=re.DOTALL
+          )
+
+          if not root_match:
+              raise RuntimeError(
+                  "Could not find <svg> element in DP.svg"
+              )
+
+          svg_root = root_match.group(0)
+
+          viewbox_match = re.search(
+              r'viewBox=["\']([^"\']+)["\']',
+              svg_root
+          )
+
+          if not viewbox_match:
+              raise RuntimeError(
+                  "DP.svg does not contain a viewBox."
+              )
+
+          viewbox = viewbox_match.group(1)
+
+          print(f"DP.svg viewBox: {viewbox}")
+
+          # ---------------------------------------------------------
+          # Extract contents of DP.svg
           # ---------------------------------------------------------
           match = re.search(
               r"<svg[^>]*>(.*?)</svg>",
@@ -92,14 +195,12 @@ jobs:
 
           if not match:
               raise RuntimeError(
-                  "Could not extract vector contents from DP.svg"
+                  "Could not extract contents from DP.svg"
               )
 
           dp_content = match.group(1)
 
-          # ---------------------------------------------------------
-          # Remove XML declarations / metadata if present
-          # ---------------------------------------------------------
+          # Remove XML declaration if present
           dp_content = re.sub(
               r"<\?xml.*?\?>",
               "",
@@ -108,27 +209,35 @@ jobs:
           )
 
           # ---------------------------------------------------------
-          # Wrap the vector DP in a group.
-          #
-          # Original DP SVG is scaled to 200x200 and positioned at:
+          # Position and size of DP
           #
           # x = 25
           # y = 515
+          # width = 200
+          # height = 200
           # ---------------------------------------------------------
           dp_group = f"""
-          <g
-            transform="translate(25 515) scale(200 200)"
+          <svg
+            x="25"
+            y="515"
+            width="200"
+            height="200"
+            viewBox="{viewbox}"
+            preserveAspectRatio="xMidYMid meet"
           >
             {dp_content}
-          </g>
+          </svg>
           """
 
+          # ---------------------------------------------------------
+          # Modify every generated SVG
+          # ---------------------------------------------------------
           for svg_file in svg_dir.glob("*.svg"):
 
               svg = svg_file.read_text()
 
               # -----------------------------------------------------
-              # 1. Cover the unwanted circular language chart
+              # 1. Remove bottom-left language chart
               # -----------------------------------------------------
               chart_mask = """
               <rect
@@ -141,7 +250,7 @@ jobs:
               """
 
               # -----------------------------------------------------
-              # 2. Cover the bottom statistics
+              # 2. Remove bottom statistics
               # -----------------------------------------------------
               bottom_mask = """
               <rect
@@ -154,9 +263,7 @@ jobs:
               """
 
               # -----------------------------------------------------
-              # 3. Add the VECTOR DP on top.
-              #
-              # There is deliberately NO <image> element here.
+              # 3. Add VECTOR DP on top
               # -----------------------------------------------------
               svg = svg.replace(
                   "</svg>",
