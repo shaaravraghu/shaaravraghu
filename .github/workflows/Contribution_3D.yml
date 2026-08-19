@@ -42,7 +42,7 @@ jobs:
             "Dino.png"
             "Eat_Sleep_Code_Repeat.jpeg"
             "Error_404.jpeg"
-            "Think_Out_Side_The_Box.jpeg"
+            "Think_OutSide_The_Box.jpeg"
           )
 
           for IMAGE in "${IMAGES[@]}"; do
