@@ -21,28 +21,55 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: shaaravraghu
 
-      # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      - name: Remove bottom-left chart and statistics
+name: GitHub-Profile-3D-Contrib
+
+on:
+  schedule:
+    - cron: "30 21 * * *"   # runs daily at 03:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate 3D contributions
+        uses: yoshi389111/github-profile-3d-contrib@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USERNAME: shaaravraghu
+
+      # Remove unwanted chart/statistics
+      # and place DP.png at bottom-left.
+      - name: Remove chart/statistics and add DP image
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
+
           python3 - <<'PY'
           from pathlib import Path
-          import re
+          import base64
 
           svg_dir = Path("profile-3d-contrib")
+          image_path = Path("main/DP.png")
+
+          # Read and embed PNG as base64
+          image_data = base64.b64encode(
+              image_path.read_bytes()
+          ).decode("utf-8")
+
+          image_href = f"data:image/png;base64,{image_data}"
 
           for svg_file in svg_dir.glob("*.svg"):
               svg = svg_file.read_text()
 
-              # ---------------------------------------------------------
-              # 1. Remove the circular language chart + language legend
-              #    from the bottom-left corner.
-              #
-              #    This covers approximately:
-              #    x = 0 -> 225
-              #    y = 365 -> 575
-              # ---------------------------------------------------------
-
+              # -----------------------------------------------------
+              # Remove circular language chart + legend
+              # -----------------------------------------------------
               chart_mask = '''
               <rect
                 x="0"
@@ -53,15 +80,9 @@ jobs:
               />
               '''
 
-              # ---------------------------------------------------------
-              # 2. Remove the contribution / star / fork statistics
-              #    along the bottom.
-              #
-              #    This covers:
-              #    x = 225 -> end
-              #    y = 575 -> end
-              # ---------------------------------------------------------
-
+              # -----------------------------------------------------
+              # Remove bottom contribution/star/fork statistics
+              # -----------------------------------------------------
               bottom_mask = '''
               <rect
                 x="225"
@@ -72,16 +93,42 @@ jobs:
               />
               '''
 
-              # Insert masks immediately before </svg>
+              # -----------------------------------------------------
+              # Add DP.png at bottom-left
+              # -----------------------------------------------------
+              dp_image = f'''
+              <image
+                x="25"
+                y="515"
+                width="200"
+                height="200"
+                preserveAspectRatio="xMidYMid meet"
+                href="{image_href}"
+              />
+              '''
+
               svg = svg.replace(
                   "</svg>",
-                  chart_mask + bottom_mask + "</svg>"
+                  chart_mask + bottom_mask + dp_image + "</svg>"
               )
 
               svg_file.write_text(svg)
 
               print(f"Updated: {svg_file}")
           PY
+
+      - name: Commit & Push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add -A .
+
+          if git commit -m "update: 3D contribution graph"; then
+            git push
+          else
+            echo "no changes"
+          fi
 
       - name: Commit & Push
         run: |
