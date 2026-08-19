@@ -80,7 +80,7 @@ jobs:
               # Spline gives smoother photographic contours
               mode="spline",
 
-              filter_speckle=10,
+              filter_speckle=20,
               color_precision=6,
               layer_difference=12,
               corner_threshold=60,
@@ -125,6 +125,28 @@ jobs:
               )
 
           svg = svg_file.read_text()
+
+          # ---------------------------------------------------------
+          # Change the SVG backdrop
+          # ---------------------------------------------------------
+          background = """
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="#0d1117"
+          />
+          """
+
+          # Insert background immediately after the opening <svg>
+          svg = re.sub(
+              r"(<svg[^>]*>)",
+              r"\1" + background,
+              svg,
+              count=1
+          )
+          
           dp_svg = dp_svg_file.read_text()
 
           # ---------------------------------------------------------
