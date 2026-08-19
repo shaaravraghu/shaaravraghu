@@ -22,29 +22,107 @@ jobs:
           USERNAME: shaaravraghu
 
       # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      - name: Remove bottom-left chart and statistics
+      # Then convert DP.png to a real SVG and place it on top.
+      - name: Remove chart, statistics and add DP
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
 
+          # ---------------------------------------------------------
+          # Install VTracer
+          # ---------------------------------------------------------
+          python3 -m pip install --upgrade vtracer
+
+          # ---------------------------------------------------------
+          # Convert DP.png -> REAL VECTOR SVG
+          #
+          # IMPORTANT:
+          # This does NOT create <image href="...">.
+          # VTracer creates actual SVG paths.
+          # ---------------------------------------------------------
           python3 - <<'PY'
           from pathlib import Path
+          import vtracer
+
+          input_file = Path("DP.png")
+          output_file = Path("DP.svg")
+
+          if not input_file.exists():
+              raise FileNotFoundError(
+                  f"Could not find {input_file}"
+              )
+
+          # Photo preset gives better results for a photograph.
+          vtracer.Config.photo().convert_file(
+              str(input_file),
+              str(output_file)
+          )
+
+          print(f"Created vector SVG: {output_file}")
+          PY
+
+          # ---------------------------------------------------------
+          # Insert the vector DP into the generated contribution SVG
+          # ---------------------------------------------------------
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
 
           svg_dir = Path("profile-3d-contrib")
+          dp_svg_path = Path("main/DP.svg")
+
+          dp_svg = dp_svg_path.read_text()
 
           # ---------------------------------------------------------
-          # IMPORTANT:
-          # Use the RAW GitHub URL instead of embedding the PNG
-          # as Base64. GitHub's SVG renderer can reject data URIs.
+          # Extract ONLY the contents inside <svg>...</svg>
           #
-          # DP.png must exist in the main branch at this location.
+          # This prevents us from nesting a complete <svg> document
+          # inside another SVG unnecessarily.
           # ---------------------------------------------------------
-          image_href = "https://cdn.jsdelivr.net/gh/shaaravraghu/shaaravraghu@main/DP.png"
-          
+          match = re.search(
+              r"<svg[^>]*>(.*?)</svg>",
+              dp_svg,
+              flags=re.DOTALL
+          )
+
+          if not match:
+              raise RuntimeError(
+                  "Could not extract vector contents from DP.svg"
+              )
+
+          dp_content = match.group(1)
+
+          # ---------------------------------------------------------
+          # Remove XML declarations / metadata if present
+          # ---------------------------------------------------------
+          dp_content = re.sub(
+              r"<\?xml.*?\?>",
+              "",
+              dp_content,
+              flags=re.DOTALL
+          )
+
+          # ---------------------------------------------------------
+          # Wrap the vector DP in a group.
+          #
+          # Original DP SVG is scaled to 200x200 and positioned at:
+          #
+          # x = 25
+          # y = 515
+          # ---------------------------------------------------------
+          dp_group = f"""
+          <g
+            transform="translate(25 515) scale(200 200)"
+          >
+            {dp_content}
+          </g>
+          """
+
           for svg_file in svg_dir.glob("*.svg"):
+
               svg = svg_file.read_text()
 
               # -----------------------------------------------------
-              # 1. Remove the unwanted circular language chart
+              # 1. Cover the unwanted circular language chart
               # -----------------------------------------------------
               chart_mask = """
               <rect
@@ -57,7 +135,7 @@ jobs:
               """
 
               # -----------------------------------------------------
-              # 2. Remove the bottom contribution/star/fork stats
+              # 2. Cover the bottom statistics
               # -----------------------------------------------------
               bottom_mask = """
               <rect
@@ -70,26 +148,16 @@ jobs:
               """
 
               # -----------------------------------------------------
-              # 3. Add DP.png on top of the masked area
-              # -----------------------------------------------------
-              dp_image = f"""
-              <image
-                x="25"
-                y="515"
-                width="200"
-                height="200"
-                preserveAspectRatio="xMidYMid meet"
-                href="{image_href}"
-                xlink:href="{image_href}"
-              />
-              """
-
-              # -----------------------------------------------------
-              # Put masks + image ON TOP of the existing SVG
+              # 3. Add the VECTOR DP on top.
+              #
+              # There is deliberately NO <image> element here.
               # -----------------------------------------------------
               svg = svg.replace(
                   "</svg>",
-                  chart_mask + bottom_mask + dp_image + "</svg>"
+                  chart_mask +
+                  bottom_mask +
+                  dp_group +
+                  "</svg>"
               )
 
               svg_file.write_text(svg)
