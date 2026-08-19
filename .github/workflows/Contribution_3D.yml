@@ -127,32 +127,55 @@ jobs:
           svg = svg_file.read_text()
 
           # ---------------------------------------------------------
-          # Change the ORIGINAL SVG backdrop
-          #
-          # The generated SVG already contains a white background.
-          # Simply adding a yellow rect at the beginning does not work
-          # because the generator's white background is drawn later.
-          #
-          # We therefore remove the existing full-canvas white
-          # background first, then add our new background.
+          # CHANGE SVG BACKGROUND
           # ---------------------------------------------------------
 
           BACKGROUND = "#f7e700"
 
-          # Remove common full-canvas white background rectangles.
+          # Find the SVG dimensions
+          root_match = re.search(
+              r"<svg[^>]*>",
+              svg,
+              flags=re.DOTALL
+          )
+
+          if not root_match:
+              raise RuntimeError(
+                  "Could not find SVG root."
+              )
+
+          svg_root = root_match.group(0)
+
+          # ---------------------------------------------------------
+          # Remove full-canvas white background rectangles.
+          #
+          # This catches:
+          #
+          #   fill="white"
+          #   fill="#fff"
+          #   fill="#ffffff"
+          #   fill="#FFFFFF"
+          # ---------------------------------------------------------
+
           svg = re.sub(
-              r'<rect\b(?=[^>]*\bx=["\']?0["\']?)'
-              r'(?=[^>]*\by=["\']?0["\']?)'
-              r'(?=[^>]*\bwidth=["\']?(?:100%|[\d.]+)["\']?)'
-              r'(?=[^>]*\bheight=["\']?(?:100%|[\d.]+)["\']?)'
-              r'(?=[^>]*\bfill=["\']?(?:white|#fff(?:fff)?|#FFFFFF)["\']?)'
+              r'<rect\b[^>]*'
+              r'(?:x=["\']?0["\']?[^>]*y=["\']?0["\']?)?'
+              r'[^>]*'
+              r'(?:width=["\']?(?:100%|[\d.]+)["\']?)'
+              r'[^>]*'
+              r'(?:height=["\']?(?:100%|[\d.]+)["\']?)'
+              r'[^>]*'
+              r'fill=["\']?(?:white|#fff|#ffffff)["\']?'
               r'[^>]*/>',
               "",
               svg,
               flags=re.IGNORECASE
           )
 
-          # Add the new background immediately after <svg>.
+          # ---------------------------------------------------------
+          # Insert our new background.
+          # ---------------------------------------------------------
+
           background = f"""
           <rect
             x="0"
