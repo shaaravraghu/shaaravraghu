@@ -21,29 +21,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: shaaravraghu
 
-name: GitHub-Profile-3D-Contrib
-
-on:
-  schedule:
-    - cron: "30 21 * * *"   # runs daily at 03:00 IST
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Generate 3D contributions
-        uses: yoshi389111/github-profile-3d-contrib@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USERNAME: shaaravraghu
-
       # Remove unwanted chart/statistics
       # and place DP.png at bottom-left.
       - name: Remove chart/statistics and add DP image
@@ -129,5 +106,3 @@ jobs:
           else
             echo "no changes"
           fi
-
-     
