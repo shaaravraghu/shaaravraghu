@@ -125,14 +125,15 @@ jobs:
               )
 
           svg = svg_file.read_text()
-
           # ---------------------------------------------------------
-          # CHANGE SVG BACKGROUND
+          # CHANGE THE ACTUAL SVG BACKGROUND
           # ---------------------------------------------------------
 
           BACKGROUND = "#f7e700"
 
-          # Find the SVG dimensions
+          # ---------------------------------------------------------
+          # Read SVG root
+          # ---------------------------------------------------------
           root_match = re.search(
               r"<svg[^>]*>",
               svg,
@@ -144,54 +145,243 @@ jobs:
                   "Could not find SVG root."
               )
 
-          svg_root = root_match.group(0)
+          root_tag = root_match.group(0)
 
           # ---------------------------------------------------------
-          # Remove full-canvas white background rectangles.
-          #
-          # This catches:
-          #
-          #   fill="white"
-          #   fill="#fff"
-          #   fill="#ffffff"
-          #   fill="#FFFFFF"
+          # Get SVG viewBox
           # ---------------------------------------------------------
-
-          svg = re.sub(
-              r'<rect\b[^>]*'
-              r'(?:x=["\']?0["\']?[^>]*y=["\']?0["\']?)?'
-              r'[^>]*'
-              r'(?:width=["\']?(?:100%|[\d.]+)["\']?)'
-              r'[^>]*'
-              r'(?:height=["\']?(?:100%|[\d.]+)["\']?)'
-              r'[^>]*'
-              r'fill=["\']?(?:white|#fff|#ffffff)["\']?'
-              r'[^>]*/>',
-              "",
-              svg,
+          viewbox_match = re.search(
+              r'viewBox=["\']([^"\']+)["\']',
+              root_tag,
               flags=re.IGNORECASE
           )
 
-          # ---------------------------------------------------------
-          # Insert our new background.
-          # ---------------------------------------------------------
+          if viewbox_match:
 
-          background = f"""
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="{BACKGROUND}"
-          />
-          """
+              vb = viewbox_match.group(1).split()
 
-          svg = re.sub(
-              r"(<svg[^>]*>)",
-              r"\1" + background,
-              svg,
-              count=1
+              if len(vb) == 4:
+                  canvas_x = float(vb[0])
+                  canvas_y = float(vb[1])
+                  canvas_w = float(vb[2])
+                  canvas_h = float(vb[3])
+
+              else:
+                  canvas_x = 0
+                  canvas_y = 0
+                  canvas_w = None
+                  canvas_h = None
+
+          else:
+
+              width_match = re.search(
+                  r'\bwidth=["\']([0-9.]+)',
+                  root_tag,
+                  flags=re.IGNORECASE
+              )
+
+              height_match = re.search(
+                  r'\bheight=["\']([0-9.]+)',
+                  root_tag,
+                  flags=re.IGNORECASE
+              )
+
+              canvas_x = 0
+              canvas_y = 0
+
+              canvas_w = (
+                  float(width_match.group(1))
+                  if width_match
+                  else None
+              )
+
+              canvas_h = (
+                  float(height_match.group(1))
+                  if height_match
+                  else None
+              )
+
+          print(
+              f"SVG canvas: "
+              f"{canvas_w} x {canvas_h}"
           )
+
+          # ---------------------------------------------------------
+          # Find every RECTANGLE in the SVG
+          # ---------------------------------------------------------
+          rect_pattern = re.compile(
+              r"<rect\b[^>]*(?:/>|>.*?</rect>)",
+              flags=re.IGNORECASE | re.DOTALL
+          )
+
+          rects = rect_pattern.findall(svg)
+
+          background_found = False
+
+          for rect in rects:
+
+              x_match = re.search(
+                  r'\bx=["\']([^"\']+)["\']',
+                  rect,
+                  flags=re.IGNORECASE
+              )
+
+              y_match = re.search(
+                  r'\by=["\']([^"\']+)["\']',
+                  rect,
+                  flags=re.IGNORECASE
+              )
+
+              width_match = re.search(
+                  r'\bwidth=["\']([^"\']+)["\']',
+                  rect,
+                  flags=re.IGNORECASE
+              )
+
+              height_match = re.search(
+                  r'\bheight=["\']([^"\']+)["\']',
+                  rect,
+                  flags=re.IGNORECASE
+              )
+
+              fill_match = re.search(
+                  r'\bfill=["\']([^"\']+)["\']',
+                  rect,
+                  flags=re.IGNORECASE
+              )
+
+              if not width_match or not height_match:
+                  continue
+
+              x = float(
+                  x_match.group(1)
+              ) if x_match else 0
+
+              y = float(
+                  y_match.group(1)
+              ) if y_match else 0
+
+              width_text = width_match.group(1)
+              height_text = height_match.group(1)
+
+              fill = (
+                  fill_match.group(1).lower()
+                  if fill_match
+                  else ""
+              )
+
+              # -----------------------------------------------------
+              # Only consider white elements.
+              #
+              # This prevents us from modifying the white grid.
+              # -----------------------------------------------------
+              if fill not in {
+                  "white",
+                  "#fff",
+                  "#ffffff"
+              }:
+                  continue
+
+              # -----------------------------------------------------
+              # Convert numeric dimensions where possible.
+              # -----------------------------------------------------
+              try:
+                  width = float(width_text)
+              except ValueError:
+                  width = None
+
+              try:
+                  height = float(height_text)
+              except ValueError:
+                  height = None
+
+              # -----------------------------------------------------
+              # Detect full-canvas rectangle.
+              # -----------------------------------------------------
+              covers_width = (
+                  width_text == "100%"
+                  or (
+                      canvas_w is not None
+                      and width is not None
+                      and width >= canvas_w * 0.98
+                  )
+              )
+
+              covers_height = (
+                  height_text == "100%"
+                  or (
+                      canvas_h is not None
+                      and height is not None
+                      and height >= canvas_h * 0.98
+                  )
+              )
+
+              covers_canvas = (
+                  abs(x - canvas_x) < 0.01
+                  and
+                  abs(y - canvas_y) < 0.01
+                  and
+                  covers_width
+                  and
+                  covers_height
+              )
+
+              if not covers_canvas:
+                  continue
+
+              print("")
+              print("========================================")
+              print("FOUND ORIGINAL BACKGROUND")
+              print("========================================")
+              print(rect)
+              print("========================================")
+
+              # -----------------------------------------------------
+              # Change ONLY this rectangle.
+              # -----------------------------------------------------
+              if fill_match:
+
+                  new_rect = re.sub(
+                      r'(\bfill=["\'])[^"\']+(["\'])',
+                      rf'\g<1>{BACKGROUND}\g<2>',
+                      rect,
+                      count=1,
+                      flags=re.IGNORECASE
+                  )
+
+              else:
+
+                  new_rect = rect.replace(
+                      "/>",
+                      f' fill="{BACKGROUND}" />'
+                  )
+
+              svg = svg.replace(
+                  rect,
+                  new_rect,
+                  1
+              )
+
+              background_found = True
+              break
+
+          if not background_found:
+              print("")
+              print(
+                  "WARNING: No full-canvas white rectangle found."
+              )
+              print(
+                  "Printing first SVG rectangles for diagnosis:"
+              )
+
+              for i, rect in enumerate(rects[:15]):
+                  print("")
+                  print(f"RECT #{i + 1}:")
+                  print(rect[:500])
+
+              raise RuntimeError(
+                  "Could not identify the original SVG background."
+              )
           
           dp_svg = dp_svg_file.read_text()
 
