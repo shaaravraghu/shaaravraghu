@@ -1,12 +1,12 @@
-name: Debug Action Source
-  run: |
-    echo "Testing access to custom action..."
-    git ls-remote https://github.com/shaaravraghu/github-profile-3D.git refs/heads/main
+# name: Debug Action Source
+#   run: |
+#     echo "Testing access to custom action..."
+#     git ls-remote https://github.com/shaaravraghu/github-profile-3D.git refs/heads/main
 
-on:
-  schedule:
-    - cron: "30 21 * * *"   # runs daily at 03:00 IST
-  workflow_dispatch:
+# on:
+#   schedule:
+#     - cron: "30 21 * * *"   # runs daily at 03:00 IST
+#   workflow_dispatch:
 
 
 name: GitHub-Profile-3D-Contrib
