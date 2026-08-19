@@ -22,13 +22,13 @@ jobs:
           USERNAME: shaaravraghu
 
       # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      # Then convert DP.png to SVG and place it on top.
+      # Then convert DP.png to vector SVG and place it on top.
       - name: Remove chart, statistics and add DP
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
 
           # ---------------------------------------------------------
-          # Verify DP.png exists and is a real PNG
+          # Verify DP.png
           # ---------------------------------------------------------
           echo "Checking DP.png..."
 
@@ -52,7 +52,11 @@ jobs:
           python3 -m pip install --user vtracer==0.6.15
 
           # ---------------------------------------------------------
-          # Convert DP.png -> REAL VECTOR SVG
+          # Convert DP.png -> vector SVG
+          #
+          # Slightly more aggressive settings reduce the final SVG
+          # size considerably while retaining the photograph's
+          # important visual features.
           # ---------------------------------------------------------
           python3 - <<'PY'
           from pathlib import Path
@@ -67,17 +71,35 @@ jobs:
           vtracer.convert_image_to_svg_py(
               str(input_file),
               str(output_file),
+
               colormode="color",
+
+              # Keep stacked color regions
               hierarchical="stacked",
+
+              # Spline gives smoother photographic contours
               mode="spline",
-              filter_speckle=4,
-              color_precision=6,
-              layer_difference=16,
+
+              # Remove tiny regions
+              filter_speckle=8,
+
+              # Reduce color complexity
+              color_precision=5,
+
+              # Merge more similar colors
+              layer_difference=24,
+
               corner_threshold=60,
-              length_threshold=4.0,
-              max_iterations=10,
+
+              # Larger threshold = fewer points
+              length_threshold=6.0,
+
+              max_iterations=8,
+
               splice_threshold=45,
-              path_precision=3
+
+              # Fewer decimal places = smaller SVG
+              path_precision=2
           )
 
           if not output_file.exists():
@@ -118,7 +140,14 @@ jobs:
           dp_svg = dp_svg_file.read_text()
 
           # ---------------------------------------------------------
-          # Get DP.svg's viewBox
+          # Read the width and height from VTracer's SVG.
+          #
+          # VTracer 0.6.15 may provide:
+          #
+          #   width="1239"
+          #   height="1269"
+          #
+          # instead of a viewBox.
           # ---------------------------------------------------------
           root_match = re.search(
               r"<svg[^>]*>",
@@ -133,22 +162,59 @@ jobs:
 
           root_tag = root_match.group(0)
 
+          width_match = re.search(
+              r'width=["\']([0-9.]+)(?:px)?["\']',
+              root_tag
+          )
+
+          height_match = re.search(
+              r'height=["\']([0-9.]+)(?:px)?["\']',
+              root_tag
+          )
+
+          # ---------------------------------------------------------
+          # Prefer viewBox if one exists.
+          # Otherwise construct one from width/height.
+          # ---------------------------------------------------------
           viewbox_match = re.search(
               r'viewBox=["\']([^"\']+)["\']',
               root_tag
           )
 
-          if not viewbox_match:
-              raise RuntimeError(
-                  "DP.svg does not contain a viewBox."
+          if viewbox_match:
+              viewbox = viewbox_match.group(1)
+
+              print(
+                  f"DP.svg viewBox detected: {viewbox}"
               )
 
-          viewbox = viewbox_match.group(1)
+          elif width_match and height_match:
 
-          print(f"DP.svg viewBox: {viewbox}")
+              width = float(width_match.group(1))
+              height = float(height_match.group(1))
+
+              viewbox = f"0 0 {width:g} {height:g}"
+
+              print(
+                  "DP.svg has no viewBox."
+              )
+
+              print(
+                  f"Using dimensions: {width:g} x {height:g}"
+              )
+
+              print(
+                  f"Constructed viewBox: {viewbox}"
+              )
+
+          else:
+              raise RuntimeError(
+                  "DP.svg has neither a viewBox nor "
+                  "usable width/height attributes."
+              )
 
           # ---------------------------------------------------------
-          # Extract the vector contents from DP.svg
+          # Extract the contents inside VTracer's <svg>.
           # ---------------------------------------------------------
           content_match = re.search(
               r"<svg[^>]*>(.*?)</svg>",
@@ -172,7 +238,7 @@ jobs:
           )
 
           # ---------------------------------------------------------
-          # Place DP at bottom-left
+          # Put the vector DP into a nested SVG viewport.
           #
           # Position:
           #   x = 25
@@ -180,6 +246,8 @@ jobs:
           #
           # Size:
           #   200 x 200
+          #
+          # preserveAspectRatio keeps the original photo ratio.
           # ---------------------------------------------------------
           dp_vector = f"""
           <svg
@@ -195,7 +263,7 @@ jobs:
           """
 
           # ---------------------------------------------------------
-          # Mask unwanted bottom-left language chart
+          # Mask unwanted circular language chart
           # ---------------------------------------------------------
           chart_mask = """
           <rect
@@ -208,7 +276,7 @@ jobs:
           """
 
           # ---------------------------------------------------------
-          # Mask bottom contribution/star/fork statistics
+          # Mask bottom statistics
           # ---------------------------------------------------------
           bottom_mask = """
           <rect
@@ -221,9 +289,9 @@ jobs:
           """
 
           # ---------------------------------------------------------
-          # Put masks and vector DP at the VERY END of the SVG.
+          # Add masks first, then DP.
           #
-          # This ensures the DP is above the masks.
+          # This guarantees DP is rendered ON TOP of the masks.
           # ---------------------------------------------------------
           insertion = (
               chart_mask +
@@ -243,17 +311,21 @@ jobs:
 
           svg_file.write_text(svg)
 
-          print("Successfully updated:")
+          print(
+              "Successfully inserted vector DP into:"
+          )
+
           print(svg_file)
           PY
 
           # ---------------------------------------------------------
-          # Remove temporary vector file.
-          # We only want the final generated SVG.
+          # Remove temporary vector
           # ---------------------------------------------------------
           rm -f DP.svg
 
-          echo "DP.svg removed. Final SVG is ready."
+          echo ""
+          echo "Final SVG generated successfully."
+
           
       - name: Commit & Push
         run: |
