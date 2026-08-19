@@ -141,16 +141,16 @@ jobs:
 
               {
                   "file": "Among_Us.png",
-                  "x": 1000,
+                  "x": 1150,
                   "y": 20,
-                  "width": 200,
-                  "height": 200,
+                  "width": 175,
+                  "height": 175,
               },
 
               {
                   "file": "CEO.png",
                   "x": 10,
-                  "y": -100,
+                  "y": -50,
                   "width": 200,
                   "height": 200,
               },
@@ -181,7 +181,7 @@ jobs:
 
               {
                   "file": "Error_404.jpeg",
-                  "x": 620,
+                  "x": 570,
                   "y": 50,
                   "width": 150,
                   "height": 150,
@@ -189,8 +189,8 @@ jobs:
 
               {
                   "file": "Think_OutSide_The_Box.jpeg",
-                  "x": 620,
-                  "y": 300,
+                  "x": 570,
+                  "y": 200,
                   "width": 150,
                   "height": 150,
               },
