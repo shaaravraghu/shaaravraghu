@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Generate 3D contributions
-        uses: shaaravraghu/github-profile-3D
+        uses: shaaravraghu/github-profile-3D@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USERNAME: shaaravraghu
