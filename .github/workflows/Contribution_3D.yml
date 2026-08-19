@@ -39,8 +39,8 @@ jobs:
           from pathlib import Path
           import vtracer
 
-          input_file = Path("main/DP.png")
-          output_file = Path("main/DP.svg")
+          input_file = Path("DP.png")
+          output_file = Path("DP.svg")
 
           if not input_file.exists():
               raise FileNotFoundError(
