@@ -310,8 +310,6 @@ jobs:
           # This guarantees DP is rendered ON TOP of the masks.
           # ---------------------------------------------------------
           insertion = (
-              chart_mask +
-              bottom_mask +
               dp_vector
           )
 
