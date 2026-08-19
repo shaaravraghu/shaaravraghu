@@ -3,7 +3,7 @@
 </p> -->
 
 <p align="center">
-  <svg
+  <img
     src = "./typing-svg (1).svg"
     alt="Quote"
     width="600"
