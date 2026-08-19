@@ -81,8 +81,8 @@ fill-opacity: 0.5;
     
 
     <image
-      x="620"
-      y="660"
+      x="600"
+      y="680"
       width="175"
       height="175"
       preserveAspectRatio="xMidYMid meet"
