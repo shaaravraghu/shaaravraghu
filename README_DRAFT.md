@@ -336,3 +336,7 @@ Loading...
     src="https://raw.githubusercontent.com/shaaravraghu/shaaravraghu/main/dark.svg">
 </picture>
 </div>
+
+
+ <th><a href="source/plugins/isocalendar/README.md">📅 Isometric commit calendar</a></th>
+ 
