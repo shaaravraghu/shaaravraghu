@@ -1,10 +1,9 @@
-
-
 name: GitHub-Profile-3D-Contrib
 
 on:
   schedule:
     - cron: "30 21 * * *"   # runs daily at 03:00 IST
+
   workflow_dispatch:
 
 permissions:
@@ -24,7 +23,7 @@ jobs:
           USERNAME: shaaravraghu
 
       # Remove ONLY the unwanted bottom-left chart and bottom statistics
-      # Then convert DP.png to vector SVG and place it on top.
+      # Then place the original DP.png directly on top.
       - name: Remove chart, statistics and add DP
         run: |
           find profile-3d-contrib -type f ! -name "profile-gitblock.svg" -delete
@@ -49,115 +48,58 @@ jobs:
           echo "DP.png verified successfully."
 
           # ---------------------------------------------------------
-          # Install VTracer
-          # ---------------------------------------------------------
-          python3 -m pip install --user vtracer==0.6.15
-
-          # ---------------------------------------------------------
-          # Convert DP.png -> vector SVG
+          # Insert ORIGINAL DP.png into profile-gitblock.svg
           #
-          # Slightly more aggressive settings reduce the final SVG
-          # size considerably while retaining the photograph's
-          # important visual features.
+          # IMPORTANT:
+          # DP.png is NOT converted to SVG/vector.
+          # It is embedded directly as a raster PNG using base64.
           # ---------------------------------------------------------
           python3 - <<'PY'
           from pathlib import Path
-          import vtracer
-
-          input_file = Path("DP.png").resolve()
-          output_file = Path("DP.svg").resolve()
-
-          print(f"Input : {input_file}")
-          print(f"Output: {output_file}")
-
-          vtracer.convert_image_to_svg_py(
-              str(input_file),
-              str(output_file),
-
-              colormode="color",
-
-              # Keep stacked color regions
-              hierarchical="stacked",
-
-              # Spline gives smoother photographic contours
-              mode="spline",
-
-              filter_speckle=20,
-              color_precision=6,
-              layer_difference=12,
-              corner_threshold=60,
-              length_threshold=4.0,
-              max_iterations=10,
-              splice_threshold=45,
-              path_precision=3
-          )
-
-          if not output_file.exists():
-              raise RuntimeError(
-                  "VTracer failed to create DP.svg"
-              )
-
-          print(
-              f"Created DP.svg "
-              f"({output_file.stat().st_size} bytes)"
-          )
-          PY
-
-          # ---------------------------------------------------------
-          # Insert vector DP into profile-gitblock.svg
-          # ---------------------------------------------------------
-          python3 - <<'PY'
-          from pathlib import Path
+          import base64
           import re
 
           svg_file = Path(
               "profile-3d-contrib/profile-gitblock.svg"
           )
 
-          dp_svg_file = Path("DP.svg")
+          png_file = Path("DP.png")
 
           if not svg_file.exists():
               raise FileNotFoundError(
                   f"Could not find {svg_file}"
               )
 
-          if not dp_svg_file.exists():
+          if not png_file.exists():
               raise FileNotFoundError(
-                  "DP.svg was not created."
+                  "DP.png was not found."
               )
 
+          # ---------------------------------------------------------
+          # Read SVG
+          # ---------------------------------------------------------
           svg = svg_file.read_text()
+
           # ---------------------------------------------------------
           # CHANGE SVG BACKGROUND
           # ---------------------------------------------------------
-
           BACKGROUND = "#f7e700"
 
-          # ---------------------------------------------------------
-          # 1. Add background-color directly to the root <svg>.
-          #
-          # This changes the SVG viewport background itself.
-          # ---------------------------------------------------------
-
+          # Add background-color directly to root <svg>
           svg = re.sub(
               r"<svg([^>]*)>",
-              lambda m:
-                  (
-                      "<svg"
-                      + m.group(1)
-                      + f' style="background:{BACKGROUND};"'
-                      + ">"
-                  ),
+              lambda m: (
+                  "<svg"
+                  + m.group(1)
+                  + f' style="background:{BACKGROUND};"'
+                  + ">"
+              ),
               svg,
               count=1
           )
 
-          # ---------------------------------------------------------
-          # 2. Also add a background rectangle.
-          #
-          # This handles renderers that ignore CSS background on SVG.
-          # ---------------------------------------------------------
-
+          # Also add a background rectangle for renderers
+          # that ignore CSS background on SVG.
           background = f"""
           <rect
             x="0"
@@ -178,143 +120,41 @@ jobs:
           print(
               f"Applied SVG background: {BACKGROUND}"
           )
-          
-          dp_svg = dp_svg_file.read_text()
 
           # ---------------------------------------------------------
-          # Read the width and height from VTracer's SVG.
+          # Read ORIGINAL PNG
+          # ---------------------------------------------------------
+          png_data = png_file.read_bytes()
+
+          # Convert PNG bytes to base64.
+          # This does NOT vectorize or modify the image.
+          png_base64 = base64.b64encode(png_data).decode("ascii")
+
+          # ---------------------------------------------------------
+          # Create raster PNG <image>
           #
-          # VTracer 0.6.15 may provide:
-          #
-          #   width="1239"
-          #   height="1269"
-          #
-          # instead of a viewBox.
-          # ---------------------------------------------------------
-          root_match = re.search(
-              r"<svg[^>]*>",
-              dp_svg,
-              flags=re.DOTALL
-          )
-
-          if not root_match:
-              raise RuntimeError(
-                  "Could not find SVG root in DP.svg"
-              )
-
-          root_tag = root_match.group(0)
-
-          width_match = re.search(
-              r'width=["\']([0-9.]+)(?:px)?["\']',
-              root_tag
-          )
-
-          height_match = re.search(
-              r'height=["\']([0-9.]+)(?:px)?["\']',
-              root_tag
-          )
-
-          # ---------------------------------------------------------
-          # Prefer viewBox if one exists.
-          # Otherwise construct one from width/height.
-          # ---------------------------------------------------------
-          viewbox_match = re.search(
-              r'viewBox=["\']([^"\']+)["\']',
-              root_tag
-          )
-
-          if viewbox_match:
-              viewbox = viewbox_match.group(1)
-
-              print(
-                  f"DP.svg viewBox detected: {viewbox}"
-              )
-
-          elif width_match and height_match:
-
-              width = float(width_match.group(1))
-              height = float(height_match.group(1))
-
-              viewbox = f"0 0 {width:g} {height:g}"
-
-              print(
-                  "DP.svg has no viewBox."
-              )
-
-              print(
-                  f"Using dimensions: {width:g} x {height:g}"
-              )
-
-              print(
-                  f"Constructed viewBox: {viewbox}"
-              )
-
-          else:
-              raise RuntimeError(
-                  "DP.svg has neither a viewBox nor "
-                  "usable width/height attributes."
-              )
-
-          # ---------------------------------------------------------
-          # Extract the contents inside VTracer's <svg>.
-          # ---------------------------------------------------------
-          content_match = re.search(
-              r"<svg[^>]*>(.*?)</svg>",
-              dp_svg,
-              flags=re.DOTALL
-          )
-
-          if not content_match:
-              raise RuntimeError(
-                  "Could not extract DP.svg contents."
-              )
-
-          dp_content = content_match.group(1)
-
-          # Remove XML declaration if present
-          dp_content = re.sub(
-              r"<\?xml.*?\?>",
-              "",
-              dp_content,
-              flags=re.DOTALL
-          )
-
-          # ---------------------------------------------------------
-          # Put the vector DP into a nested SVG viewport.
-          #
-          # Position:
+          # The PNG is displayed at:
           #   x = 0
-          #   y = 650
+          #   y = 500
+          #   width = 400
+          #   height = 400
           #
-          # Size:
-          #   400 x 400
-          #
-          # preserveAspectRatio keeps the original photo ratio.
+          # preserveAspectRatio keeps the original image ratio.
           # ---------------------------------------------------------
-          dp_vector = f"""
-          <svg
+          dp_image = f"""
+          <image
             x="0"
             y="500"
             width="400"
             height="400"
-            viewBox="{viewbox}"
             preserveAspectRatio="xMidYMid meet"
-          >
-            {dp_content}
-          </svg>
+            href="data:image/png;base64,{png_base64}"
+          />
           """
 
-
-
           # ---------------------------------------------------------
-          # Add masks first, then DP.
-          #
-          # This guarantees DP is rendered ON TOP of the masks.
+          # Put DP.png directly on TOP of the existing SVG
           # ---------------------------------------------------------
-          insertion = (
-              dp_vector
-          )
-
           if "</svg>" not in svg:
               raise RuntimeError(
                   "profile-gitblock.svg has no closing </svg>."
@@ -322,27 +162,26 @@ jobs:
 
           svg = svg.replace(
               "</svg>",
-              insertion + "</svg>"
+              dp_image + "</svg>",
+              1
           )
 
+          # ---------------------------------------------------------
+          # Write final SVG
+          # ---------------------------------------------------------
           svg_file.write_text(svg)
 
           print(
-              "Successfully inserted vector DP into:"
+              "Successfully inserted ORIGINAL DP.png "
+              "as a raster image into:"
           )
 
           print(svg_file)
           PY
 
-          # ---------------------------------------------------------
-          # Remove temporary vector
-          # ---------------------------------------------------------
-          rm -f DP.svg
-
           echo ""
           echo "Final SVG generated successfully."
 
-          
       - name: Commit & Push
         run: |
           git config user.name github-actions
@@ -355,20 +194,3 @@ jobs:
           else
             echo "no changes"
           fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
