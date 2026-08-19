@@ -135,7 +135,7 @@ jobs:
             y="0"
             width="100%"
             height="100%"
-            fill="#0d1117"
+            fill="#f7e700"
           />
           """
 
@@ -281,7 +281,7 @@ jobs:
             y="500"
             width="500"
             height="575"
-            fill="white"
+            fill="#f7e700"
           />
           """
 
@@ -294,7 +294,7 @@ jobs:
             y="800"
             width="735"
             height="65"
-            fill="white"
+            fill="#f7e700"
           />
           """
 
