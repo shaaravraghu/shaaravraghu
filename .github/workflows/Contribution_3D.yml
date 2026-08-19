@@ -80,7 +80,7 @@ jobs:
               # Spline gives smoother photographic contours
               mode="spline",
 
-              filter_speckle=3,
+              filter_speckle=10,
               color_precision=6,
               layer_difference=12,
               corner_threshold=60,
