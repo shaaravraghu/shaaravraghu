@@ -173,7 +173,7 @@ jobs:
 
               {
                   "file": "Eat_Sleep_Code_Repeat.jpeg",
-                  "x": 200,
+                  "x": 325,
                   "y": 10,
                   "width": 150,
                   "height": 150,
@@ -181,7 +181,7 @@ jobs:
 
               {
                   "file": "Error_404.jpeg",
-                  "x": 350,
+                  "x": 475,
                   "y": 10,
                   "width": 150,
                   "height": 150,
@@ -189,7 +189,7 @@ jobs:
 
               {
                   "file": "Think_OutSide_The_Box.jpeg",
-                  "x": 500,
+                  "x": 625,
                   "y": 10,
                   "width": 150,
                   "height": 150,
