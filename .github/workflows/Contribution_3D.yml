@@ -127,19 +127,42 @@ jobs:
           svg = svg_file.read_text()
 
           # ---------------------------------------------------------
-          # Change the SVG backdrop
+          # Change the ORIGINAL SVG backdrop
+          #
+          # The generated SVG already contains a white background.
+          # Simply adding a yellow rect at the beginning does not work
+          # because the generator's white background is drawn later.
+          #
+          # We therefore remove the existing full-canvas white
+          # background first, then add our new background.
           # ---------------------------------------------------------
-          background = """
+
+          BACKGROUND = "#f7e700"
+
+          # Remove common full-canvas white background rectangles.
+          svg = re.sub(
+              r'<rect\b(?=[^>]*\bx=["\']?0["\']?)'
+              r'(?=[^>]*\by=["\']?0["\']?)'
+              r'(?=[^>]*\bwidth=["\']?(?:100%|[\d.]+)["\']?)'
+              r'(?=[^>]*\bheight=["\']?(?:100%|[\d.]+)["\']?)'
+              r'(?=[^>]*\bfill=["\']?(?:white|#fff(?:fff)?|#FFFFFF)["\']?)'
+              r'[^>]*/>',
+              "",
+              svg,
+              flags=re.IGNORECASE
+          )
+
+          # Add the new background immediately after <svg>.
+          background = f"""
           <rect
             x="0"
             y="0"
             width="100%"
             height="100%"
-            fill="#f7e700"
+            fill="{BACKGROUND}"
           />
           """
 
-          # Insert background immediately after the opening <svg>
           svg = re.sub(
               r"(<svg[^>]*>)",
               r"\1" + background,
