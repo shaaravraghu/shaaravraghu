@@ -144,7 +144,7 @@ jobs:
           dp_image = f"""
           <image
             x="0"
-            y="500"
+            y="450"
             width="400"
             height="400"
             preserveAspectRatio="xMidYMid meet"
