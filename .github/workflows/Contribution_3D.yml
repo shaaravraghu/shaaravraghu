@@ -130,15 +130,4 @@ jobs:
             echo "no changes"
           fi
 
-      - name: Commit & Push
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
-          git add -A .
-
-          if git commit -m "update: 3D contribution graph"; then
-            git push
-          else
-            echo "no changes"
-          fi
+     
