@@ -38,8 +38,8 @@ jobs:
           #
           # DP.png must exist in the main branch at this location.
           # ---------------------------------------------------------
-          image_href = "https://raw.githubusercontent.com/shaaravraghu/shaaravraghu/DP.png"
-
+          image_href = "https://cdn.jsdelivr.net/gh/shaaravraghu/shaaravraghu@main/DP.png"
+          
           for svg_file in svg_dir.glob("*.svg"):
               svg = svg_file.read_text()
 
