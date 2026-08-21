@@ -35,10 +35,10 @@
   >
 </p>
 
-<p align="center">
+<!-- <p align="center">
   <img
     src="./SKILLS.png"
     alt="GitHub Graph"
     width="1000"
   >
-</p>
+</p> -->
