@@ -12,7 +12,11 @@
 <!-- Please star and support this free open source project [https://github.com/shaaravraghu/ClipWallet/] -->
 
 <p align="center">
-  <img=https://raw.githubusercontent.com/shaaravraghu/gif-terminal/main/output.gif>
+  <img
+    src="https://raw.githubusercontent.com/shaaravraghu/gif-terminal/main/output.gif"
+    alt="Terminal GIF"
+    width="1000"
+  >
 </p>
 
 <p align="center">
