@@ -140,7 +140,7 @@ jobs:
           // Colors.
           const GREY = "#d9e6f7";
           const BLUE = "#4c8fe8";
-          const TEXT = "#434d58";
+          const TEXT = "#fafafa";
 
 
           // ========================================================
