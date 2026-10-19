@@ -225,7 +225,7 @@ jobs:
       - name: Download GitHub Insights
         run: |
           curl -L \
-            "https://git-hub-insights-two.vercel.app/api/insight?username=shaaravraghu&theme=github_dark&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true&hide_langs=HTML%2CCSS%2CMakefile" alt="shaaravraghu's GitHub Insights" \
+            "https://git-hub-insights-two.vercel.app/api/insight?username=shaaravraghu&theme=github_dark&graph=true&languages=true&streak=true&stats=true&header=true&summary=true&profile=true&hide_langs=HTML%2CCSS%2CMakefile" \
             -o insights.svg
 
           echo "Downloaded insights.svg"
