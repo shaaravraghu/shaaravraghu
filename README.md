@@ -42,3 +42,10 @@
     width="1000"
   >
 </p> -->
+
+<!--
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=shaaravraghu/clipwallet&type=timeline&legend=top-left)](https://www.star-history.com/?repos=shaaravraghu%2Fclipwallet&type=timeline&legend=top-left)
+
+-->
